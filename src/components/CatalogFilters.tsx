@@ -13,20 +13,33 @@ import { btnSolidClass } from "@/lib/uiStyles";
 import { useCatalog } from "./CatalogProvider";
 import { useShop } from "./ShopProvider";
 
-function facetCount(
+/** One pass over products → facet histograms (avoids O(n × options)). */
+function buildFacetCounts(
   products: Product[],
   categories: Record<number, string>,
   filters: Filters,
-  key: "categories" | "brands" | "colors" | "sizes",
-  value: number | string,
 ) {
-  return products.filter((p) => {
-    if (key === "categories" && p.categoryId !== value) return false;
-    if (key === "brands" && p.brand !== value) return false;
-    if (key === "colors" && !p.colors.includes(String(value))) return false;
-    if (key === "sizes" && !p.sizes.includes(String(value))) return false;
-    return matchProduct(p, filters, key, categories);
-  }).length;
+  const cat: Record<number, number> = {};
+  const brands: Record<string, number> = {};
+  const colors: Record<string, number> = {};
+  const sizes: Record<string, number> = {};
+
+  for (const p of products) {
+    if (matchProduct(p, filters, "categories", categories)) {
+      cat[p.categoryId] = (cat[p.categoryId] ?? 0) + 1;
+    }
+    if (matchProduct(p, filters, "brands", categories)) {
+      brands[p.brand] = (brands[p.brand] ?? 0) + 1;
+    }
+    if (matchProduct(p, filters, "colors", categories)) {
+      for (const c of p.colors) colors[c] = (colors[c] ?? 0) + 1;
+    }
+    if (matchProduct(p, filters, "sizes", categories)) {
+      for (const s of p.sizes) sizes[s] = (sizes[s] ?? 0) + 1;
+    }
+  }
+
+  return { cat, brands, colors, sizes };
 }
 
 function isLightSwatch(hex: string) {
@@ -113,28 +126,39 @@ export function CatalogSidebar({
     router.replace(qs ? `/catalog?${qs}` : "/catalog", { scroll: false });
   }
 
+  const productCountByCat = useMemo(() => {
+    const map = new Map<number, number>();
+    for (const p of products) {
+      map.set(p.categoryId, (map.get(p.categoryId) ?? 0) + 1);
+    }
+    return map;
+  }, [products]);
+
+  const facetCounts = useMemo(
+    () => buildFacetCounts(products, categories, filters),
+    [products, categories, filters],
+  );
+
   const groups = useMemo(() => {
     return CATEGORY_GROUPS.map((g) => {
       const liveIds = g.categoryIds.filter((id) =>
-        products.some((p) => p.categoryId === id),
+        productCountByCat.has(id),
       );
-      const count = products.filter((p) =>
-        liveIds.includes(p.categoryId),
-      ).length;
+      const count = liveIds.reduce(
+        (sum, id) => sum + (productCountByCat.get(id) ?? 0),
+        0,
+      );
       return { ...g, liveIds, count };
     }).filter((g) => g.count > 0);
-  }, [products]);
+  }, [productCountByCat]);
 
   const orphanCats = useMemo(() => {
     const grouped = new Set(CATEGORY_GROUPS.flatMap((g) => g.categoryIds));
     return Object.keys(categories)
       .map(Number)
-      .filter(
-        (id) =>
-          !grouped.has(id) && products.some((p) => p.categoryId === id),
-      )
+      .filter((id) => !grouped.has(id) && productCountByCat.has(id))
       .sort((a, b) => categories[a].localeCompare(categories[b], "uk"));
-  }, [categories, products]);
+  }, [categories, productCountByCat]);
 
   const sizes = [
     ...new Set([...products.flatMap((p) => p.sizes), ...filters.sizes]),
@@ -270,13 +294,7 @@ export function CatalogSidebar({
                       <div className="mt-1 space-y-0.5 border-l border-black/10 py-1 pl-3 ml-3">
                         {g.liveIds.map((id) => {
                           const on = filters.categories.includes(id);
-                          const n = facetCount(
-                            products,
-                            categories,
-                            filters,
-                            "categories",
-                            id,
-                          );
+                          const n = facetCounts.cat[id] ?? 0;
                           return (
                             <button
                               key={id}
@@ -329,13 +347,7 @@ export function CatalogSidebar({
 
               {orphanCats.map((id) => {
                 const on = filters.categories.includes(id);
-                const n = facetCount(
-                  products,
-                  categories,
-                  filters,
-                  "categories",
-                  id,
-                );
+                const n = facetCounts.cat[id] ?? 0;
                 return (
                   <button
                     key={id}
@@ -553,7 +565,7 @@ export function CatalogSidebar({
     return (
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="mb-2 flex shrink-0 items-center justify-between border-b border-black/10 pb-4">
-          <h2 className="text-lg font-bold text-ink">Фільтри</h2>
+          <h2 className="text-lg font-semibold text-ink">Фільтри</h2>
           {onClose && (
             <button
               type="button"

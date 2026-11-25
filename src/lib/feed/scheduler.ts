@@ -5,11 +5,20 @@ const g = globalThis as typeof globalThis & {
   __brandshopCatalogScheduler?: { started: boolean; timer?: NodeJS.Timeout };
 };
 
+function isServerless() {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
 /**
- * Keeps the in-memory catalog fresh on long-running Node servers (`next start`).
- * Vercel Cron still hits /api/cron/sync every 3 hours as the primary trigger.
+ * Long-running Node (`next start`) only.
+ * On Vercel the platform cron hits /api/cron/sync — no in-memory interval.
  */
 export function startCatalogScheduler() {
+  if (isServerless()) {
+    console.log("[catalog] scheduler skipped on serverless (use cron)");
+    return;
+  }
+
   const slot = (g.__brandshopCatalogScheduler ??= { started: false });
   if (slot.started) return;
   slot.started = true;
@@ -26,6 +35,5 @@ export function startCatalogScheduler() {
     refreshCatalogInBackground();
   }, SYNC_INTERVAL_MS);
 
-  // Don't keep the process alive solely because of the timer (tests/scripts).
   slot.timer.unref?.();
 }

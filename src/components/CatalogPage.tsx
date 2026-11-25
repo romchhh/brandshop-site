@@ -244,7 +244,7 @@ export function CatalogPage() {
               </div>
             ) : (
               <div className="col-span-full flex flex-col items-center justify-center gap-4 py-20">
-                <h3 className="text-xl font-bold uppercase tracking-wider text-ink">
+                <h3 className="text-xl font-semibold uppercase tracking-wider text-ink">
                   Товарів не знайдено
                 </h3>
                 <p className="max-w-md text-center text-sm text-gray-400">

@@ -20,7 +20,7 @@ type Tab = "new" | "hits" | "sale";
 
 export function HomePage() {
   const router = useRouter();
-  const { products, productsById, minPrice, maxPrice } = useCatalog();
+  const { products, productsById, minPrice, maxPrice, ready } = useCatalog();
   const { resetFilters, setFilters } = useShop();
   const [tab, setTab] = useState<Tab>("new");
 
@@ -32,6 +32,7 @@ export function HomePage() {
         : homeSaleItems(products);
 
   const heroIds = [716, 2222, 389];
+  const loading = !ready && products.length === 0;
 
   return (
     <>
@@ -77,25 +78,32 @@ export function HomePage() {
           </div>
 
           <div className="grid grid-cols-3 items-end gap-4 md:gap-5">
-            {heroIds.map((id, i) => {
-              const p =
-                productsById[id] ||
-                products.find((x) => x.categoryId === (i === 2 ? 16 : 27)) ||
-                products[i];
-              if (!p) return null;
-              return (
-                <div key={id} className={heroOffset(i)}>
-                  <div className="overflow-hidden rounded-2xl shadow-[0_12px_40px_rgba(140,47,57,0.12)] ring-1 ring-sale/10">
-                    <ProductImage
-                      product={p}
-                      priority={i === 1}
-                      sizes="33vw"
-                      className="rounded-2xl"
-                    />
-                  </div>
-                </div>
-              );
-            })}
+            {loading
+              ? [0, 1, 2].map((i) => (
+                  <div
+                    key={i}
+                    className={`aspect-[3/4] animate-pulse rounded-2xl bg-ph ${heroOffset(i)}`}
+                  />
+                ))
+              : heroIds.map((id, i) => {
+                  const p =
+                    productsById[id] ||
+                    products.find((x) => x.categoryId === (i === 2 ? 16 : 27)) ||
+                    products[i];
+                  if (!p) return null;
+                  return (
+                    <div key={id} className={heroOffset(i)}>
+                      <div className="overflow-hidden rounded-2xl shadow-[0_12px_40px_rgba(140,47,57,0.12)] ring-1 ring-sale/10">
+                        <ProductImage
+                          product={p}
+                          priority={i === 1}
+                          sizes="33vw"
+                          className="rounded-2xl"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
           </div>
         </Container>
       </section>

@@ -223,8 +223,9 @@ export const MIN_PRICE = priceBounds(SEED_PRODUCTS).min;
 export const MAX_PRICE = priceBounds(SEED_PRODUCTS).max;
 
 export function brandsInCatalog(products: Product[]) {
+  const present = new Set(products.map((p) => p.brand));
   return BRAND_RULES.map((b) => b.name)
-    .filter((b) => products.some((p) => p.brand === b))
+    .filter((b) => present.has(b))
     .sort((a, b) => a.localeCompare(b, "uk"));
 }
 

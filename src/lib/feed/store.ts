@@ -13,6 +13,8 @@ import type { CatalogPublic, CatalogSnapshot } from "./types";
 
 type GlobalCatalog = {
   snapshot: CatalogSnapshot | null;
+  publicView: CatalogPublic | null;
+  publicKey: string | null;
   syncing: Promise<CatalogSnapshot> | null;
   loadedDisk: boolean;
 };
@@ -25,6 +27,8 @@ function state(): GlobalCatalog {
   if (!g.__brandshopCatalog) {
     g.__brandshopCatalog = {
       snapshot: null,
+      publicView: null,
+      publicKey: null,
       syncing: null,
       loadedDisk: false,
     };
@@ -45,10 +49,24 @@ function isProductionBuild() {
   return process.env.NEXT_PHASE === "phase-production-build";
 }
 
+function isServerless() {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
+function invalidatePublic() {
+  const s = state();
+  s.publicView = null;
+  s.publicKey = null;
+}
+
 export function toPublic(snapshot: CatalogSnapshot): CatalogPublic {
+  const s = state();
+  const key = `${snapshot.syncedAt}:${snapshot.productCount}`;
+  if (s.publicView && s.publicKey === key) return s.publicView;
+
   const products = slimProducts(snapshot.products);
   const { min, max } = priceBounds(products);
-  return {
+  const view: CatalogPublic = {
     syncedAt: snapshot.syncedAt,
     feedGeneratedAt: snapshot.feedGeneratedAt,
     productCount: snapshot.productCount,
@@ -58,6 +76,9 @@ export function toPublic(snapshot: CatalogSnapshot): CatalogPublic {
     minPrice: min,
     maxPrice: max,
   };
+  s.publicView = view;
+  s.publicKey = key;
+  return view;
 }
 
 async function loadDiskOnce() {
@@ -72,6 +93,7 @@ async function loadDiskOnce() {
     Date.parse(disk.syncedAt) >= Date.parse(s.snapshot.syncedAt)
   ) {
     s.snapshot = disk;
+    invalidatePublic();
   }
 }
 
@@ -82,6 +104,7 @@ function runSync(): Promise<CatalogSnapshot> {
   const job = syncCatalog()
     .then((snapshot) => {
       s.snapshot = snapshot;
+      invalidatePublic();
       return snapshot;
     })
     .finally(() => {
@@ -92,9 +115,9 @@ function runSync(): Promise<CatalogSnapshot> {
   return job;
 }
 
-/** Non-blocking refresh when data is older than 3h. */
+/** Non-blocking refresh when data is older than 3h. No-op on serverless. */
 export function refreshCatalogInBackground() {
-  if (isProductionBuild()) return;
+  if (isProductionBuild() || isServerless()) return;
   const s = state();
   if (s.syncing) return;
   if (s.snapshot && isFresh(s.snapshot) && !isSeed(s.snapshot)) return;
@@ -124,9 +147,15 @@ export async function getCatalogSnapshot(options?: {
 
   if (!s.snapshot) {
     s.snapshot = seedSnapshot();
+    invalidatePublic();
   }
 
-  if (!isProductionBuild() && (isSeed(s.snapshot) || !isFresh(s.snapshot))) {
+  // Only long-running Node hosts auto-refresh; Vercel uses cron.
+  if (
+    !isProductionBuild() &&
+    !isServerless() &&
+    (isSeed(s.snapshot) || !isFresh(s.snapshot))
+  ) {
     refreshCatalogInBackground();
   }
 
@@ -146,4 +175,5 @@ export function getMemorySnapshot(): CatalogSnapshot | null {
 export function setMemorySnapshot(snapshot: CatalogSnapshot) {
   state().snapshot = snapshot;
   state().loadedDisk = true;
+  invalidatePublic();
 }

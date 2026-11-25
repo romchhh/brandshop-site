@@ -13,7 +13,7 @@ type Props = {
 
 const SIZE_CLASSES = {
   sm: "h-9 min-h-9 w-full gap-1.5 px-3 text-xs sm:h-10 sm:min-h-10 sm:text-sm",
-  lg: "h-14 min-h-14 flex-1 gap-2.5 px-6 text-base font-bold sm:h-[3.75rem] sm:text-lg",
+  lg: "h-14 min-h-14 flex-1 gap-2.5 px-6 text-base font-semibold sm:h-[3.75rem] sm:text-lg",
 };
 
 export function AddToCartButton({

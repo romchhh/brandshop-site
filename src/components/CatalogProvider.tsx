@@ -7,15 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  ALL_BRANDS,
-  CATEGORIES,
-  MAX_PRICE,
-  MIN_PRICE,
-  SEED_PRODUCTS,
-  indexById,
-  type Product,
-} from "@/lib/catalog";
+import { indexById, type Product } from "@/lib/catalog";
 import type { CatalogPublic } from "@/lib/feed/types";
 
 type CatalogContextValue = {
@@ -32,15 +24,17 @@ type CatalogContextValue = {
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
 
-const seedValue: CatalogContextValue = {
-  products: SEED_PRODUCTS,
-  productsById: indexById(SEED_PRODUCTS),
-  categories: CATEGORIES,
-  brands: ALL_BRANDS,
-  minPrice: MIN_PRICE,
-  maxPrice: MAX_PRICE,
+const CACHE_KEY = "bs_catalog_v2";
+
+const emptyValue: CatalogContextValue = {
+  products: [],
+  productsById: {},
+  categories: {},
+  brands: [],
+  minPrice: 0,
+  maxPrice: 0,
   syncedAt: null,
-  productCount: SEED_PRODUCTS.length,
+  productCount: 0,
   ready: false,
 };
 
@@ -58,6 +52,26 @@ function fromPublic(data: CatalogPublic): CatalogContextValue {
   };
 }
 
+function readSessionCache(): CatalogPublic | null {
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as CatalogPublic;
+    if (!data?.products?.length) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionCache(data: CatalogPublic) {
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  } catch {
+    /* quota / private mode */
+  }
+}
+
 async function fetchCatalog(): Promise<CatalogPublic> {
   const res = await fetch("/api/catalog", {
     headers: { Accept: "application/json" },
@@ -73,50 +87,40 @@ export function CatalogProvider({
   children: ReactNode;
   initial?: CatalogPublic | null;
 }) {
-  const hasInitial = Boolean(initial?.products?.length);
   const [value, setValue] = useState<CatalogContextValue>(() =>
-    hasInitial && initial ? fromPublic(initial) : seedValue,
+    initial?.products?.length ? fromPublic(initial) : emptyValue,
   );
 
   useEffect(() => {
     let cancelled = false;
 
-    const apply = (data: CatalogPublic) => {
-      if (!cancelled) setValue(fromPublic(data));
-    };
+    // Already hydrated from SSR — do not refetch (saves ~400KB + CPU).
+    if (initial?.products?.length) return;
 
-    const markReady = () => {
-      if (!cancelled) {
-        setValue((prev) => (prev.ready ? prev : { ...prev, ready: true }));
-      }
-    };
-
-    // SSR already shipped the catalog — soft-refresh later, no double payload.
-    if (hasInitial) {
-      const timer = window.setTimeout(() => {
-        void fetchCatalog()
-          .then(apply)
-          .catch((err) => {
-            console.error("[catalog] background refresh failed:", err);
-          });
-      }, 45_000);
-      return () => {
-        cancelled = true;
-        window.clearTimeout(timer);
-      };
+    const cached = readSessionCache();
+    if (cached && !cancelled) {
+      setValue(fromPublic(cached));
     }
 
     void fetchCatalog()
-      .then(apply)
+      .then((data) => {
+        if (cancelled) return;
+        writeSessionCache(data);
+        setValue(fromPublic(data));
+      })
       .catch((err) => {
         console.error("[catalog] client load failed:", err);
-        markReady();
+        if (!cancelled) {
+          setValue((prev) =>
+            prev.ready ? prev : { ...prev, ready: true },
+          );
+        }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [hasInitial]);
+  }, [initial]);
 
   return (
     <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>
