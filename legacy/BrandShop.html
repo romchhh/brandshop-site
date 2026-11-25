@@ -1,0 +1,679 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>BrandShop</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&family=Instrument+Serif:ital@1&display=swap">
+<style>
+/* Layout: quiet gallery-style storefront. Dark editorial hero, light catalogue, one oxblood accent used only for sale and primary action. */
+:root{
+  --bg:#f3f3f1; --surface:#ffffff; --fg:#121316; --mut:#6b6d72; --line:#dcdcd8; --ph:#e7e7e3;
+  --accent:#5b1f27; --accent-fg:#ffffff; --sale:#8c2f39;
+  --hero-bg:#141518; --hero-fg:#f1f0ec; --hero-mut:#9a9ca2;
+  --f-body:'Jost','Helvetica Neue',Arial,sans-serif; --f-accent:'Instrument Serif','Times New Roman',serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e0f11; --surface:#17181b; --fg:#ecebe8; --mut:#9a9ca2; --line:#2a2b2f; --ph:#1d1e22;
+  --accent:#c0707a; --accent-fg:#141518; --sale:#d98a93; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e0f11; --surface:#17181b; --fg:#ecebe8; --mut:#9a9ca2; --line:#2a2b2f; --ph:#1d1e22;
+  --accent:#c0707a; --accent-fg:#141518; --sale:#d98a93; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;font-weight:300}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--surface)}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-weight:300;margin:0;text-wrap:balance;letter-spacing:.01em}
+.eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--mut);font-weight:400}
+.ann{background:var(--hero-bg);color:var(--hero-fg);font-size:11px;letter-spacing:.18em;text-transform:uppercase;text-align:center;padding:9px 16px}
+/* header */
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--surface);border-bottom:1px solid var(--line)}
+.hdr .in{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:64px;gap:16px}
+.nav{display:flex;gap:28px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:400}
+.nav a{padding:6px 0;border-bottom:1px solid transparent}
+.nav a:hover,.nav a.on{border-color:var(--fg)}
+.logo{font-size:20px;letter-spacing:.42em;font-weight:400;text-transform:uppercase;padding-left:.42em}
+.tools{display:flex;justify-content:flex-end;gap:6px}
+.ib{position:relative;width:40px;height:40px;display:grid;place-items:center;border-radius:50%}
+.ib:hover{background:var(--bg)}
+.ib svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.4}
+.cnt{position:absolute;top:3px;right:1px;min-width:17px;height:17px;border-radius:9px;background:var(--accent);color:var(--accent-fg);font-size:10px;font-weight:500;display:grid;place-items:center;padding:0 4px}
+.cnt[hidden]{display:none}
+.burger{display:none}
+.sbar{border-top:1px solid var(--line);background:var(--surface)}
+.sbar form{display:flex;gap:12px;align-items:center;height:56px}
+.sbar input{flex:1;min-width:0;border:0;background:none;font-size:18px;outline:0}
+@media(max-width:860px){
+  .hdr .in{grid-template-columns:auto 1fr auto;height:56px}
+  .nav{display:none}.burger{display:grid}
+  .logo{text-align:center;font-size:17px}
+  .nav.open{display:flex;position:absolute;top:56px;left:0;right:0;background:var(--surface);flex-direction:column;gap:0;padding:8px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+  .nav.open a{padding:14px 0;border-bottom:1px solid var(--line)}
+}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:48px;padding:0 30px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:400;border:1px solid var(--fg);transition:background .2s,color .2s}
+.btn.solid{background:var(--fg);color:var(--bg)}
+.btn.solid:hover{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.ghost:hover{background:var(--fg);color:var(--bg)}
+.btn.lite{border-color:var(--hero-fg);color:var(--hero-fg)}
+.btn.lite:hover{background:var(--hero-fg);color:var(--hero-bg)}
+.btn.block{width:100%}
+.link{font-size:12px;letter-spacing:.16em;text-transform:uppercase;border-bottom:1px solid currentColor;padding-bottom:3px;font-weight:400}
+/* hero */
+.hero{background:var(--hero-bg);color:var(--hero-fg);overflow:hidden}
+.hero .in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:48px;align-items:center;padding-block:72px 0;min-height:620px}
+.hero .txt{padding-bottom:72px}
+.hero .eyebrow{color:var(--hero-mut)}
+.hero h1{font-size:clamp(44px,6.4vw,92px);line-height:.98;font-weight:200;margin:22px 0 26px;letter-spacing:-.01em}
+.hero h1 em{font-family:var(--f-accent);font-weight:400;letter-spacing:0}
+.hero p{max-width:420px;color:var(--hero-mut);margin:0 0 36px;font-size:16px}
+.hero .cta{display:flex;gap:14px;flex-wrap:wrap}
+.hero .pics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:end;align-self:end}
+.hero .pics .ph{background:#202125;aspect-ratio:3/4.4}
+.hero .pics .ph:nth-child(2){transform:translateY(-36px)}
+.hero .pics .ph:nth-child(3){transform:translateY(-12px)}
+@media(max-width:860px){
+  .hero .in{grid-template-columns:1fr;gap:36px;padding-block:48px 0;min-height:0}
+  .hero .txt{padding-bottom:0}
+  .hero .pics{gap:10px}.hero .pics .ph:nth-child(2){transform:translateY(-20px)}.hero .pics .ph:nth-child(3){transform:none}
+}
+/* placeholders and images */
+.ph{position:relative;background:var(--ph);overflow:hidden;display:grid;place-items:center}
+.ph::after{content:attr(data-b);position:absolute;inset:auto 10px 12px;text-align:center;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);opacity:.7}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;transition:transform .6s ease}
+.ph img.bad{display:none}
+/* sections */
+.sec{padding-block:72px 0}
+.sec-h{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:28px}
+.sec-h h2{font-size:clamp(28px,3.4vw,42px);font-weight:200;margin-top:8px}
+.cats{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
+.cat{display:block}
+.cat .ph{aspect-ratio:3/4}
+.cat:hover img,.card:hover .ph img{transform:scale(1.04)}
+.cat .nm{display:flex;justify-content:space-between;gap:8px;margin-top:12px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:400}
+.cat .nm span{color:var(--mut)}
+@media(max-width:1100px){.cats{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:700px){.cats{grid-template-columns:repeat(2,1fr);gap:12px}}
+.tabs{display:flex;gap:26px}
+.tabs button{font-size:12px;letter-spacing:.16em;text-transform:uppercase;padding:6px 0;border-bottom:1px solid transparent;color:var(--mut);font-weight:400}
+.tabs button.on{color:var(--fg);border-color:var(--fg)}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:34px 18px}
+.grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:1100px){.grid,.grid.g3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.grid,.grid.g3{grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 12px}}
+.card{position:relative;display:block;min-width:0}
+.card .ph{aspect-ratio:3/4}
+.card .fav{position:absolute;top:10px;right:10px;z-index:3;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--surface) 82%,transparent)}
+.card .fav svg,.pinfo .fav svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5}
+.fav.on svg{fill:var(--accent);stroke:var(--accent)}
+.badge{position:absolute;top:12px;left:12px;z-index:3;background:var(--sale);color:#fff;font-size:10px;letter-spacing:.14em;padding:4px 8px;font-weight:500}
+.card .br{margin-top:12px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);font-weight:400}
+.card .tt{font-size:14px;margin:2px 0 6px;overflow-wrap:anywhere}
+.price{font-weight:400;font-variant-numeric:tabular-nums}
+.price s{color:var(--mut);font-weight:300;margin-left:8px}
+.price b{color:var(--sale);font-weight:400}
+.dots{display:flex;gap:5px;margin-top:8px}
+.dot{width:11px;height:11px;border-radius:50%;border:1px solid var(--line);display:inline-block}
+.band{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.band a{position:relative;display:block;aspect-ratio:4/3;overflow:hidden;background:var(--hero-bg);color:var(--hero-fg)}
+.band .ph{position:absolute;inset:0;background:#202125}
+.band .ph::after{display:none}
+.band .ov{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:28px;background:linear-gradient(to top,rgba(0,0,0,.62),transparent 60%)}
+.band h3{font-size:clamp(24px,2.8vw,36px);font-weight:200;color:#fff}
+.band a:hover img{transform:scale(1.04)}
+.band .link{align-self:flex-start;color:#fff}
+@media(max-width:700px){.band{grid-template-columns:1fr}}
+.vals{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding-block:34px;margin-top:72px}
+.vals h4{margin:0 0 6px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;font-weight:400}
+.vals p{margin:0;color:var(--mut)}
+@media(max-width:700px){.vals{grid-template-columns:1fr;gap:20px}}
+/* footer */
+.ftr{margin-top:96px;background:var(--hero-bg);color:var(--hero-fg);padding-block:64px 28px}
+.ftr .cols{display:grid;grid-template-columns:1.5fr 1fr 1fr 1.2fr;gap:40px}
+.ftr h4{margin:0 0 16px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:400;color:var(--hero-mut)}
+.ftr li{list-style:none;margin:0 0 9px}.ftr ul{margin:0;padding:0}
+.ftr a:hover{text-decoration:underline}
+.ftr .big{font-size:22px;letter-spacing:.4em;text-transform:uppercase;font-weight:400}
+.ftr form{display:flex;border-bottom:1px solid var(--hero-mut);margin-top:6px}
+.ftr input{flex:1;min-width:0;background:none;border:0;padding:10px 0;outline:0;color:var(--hero-fg)}
+.ftr form button{font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.ftr .bot{margin-top:56px;padding-top:20px;border-top:1px solid #2a2b2f;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--hero-mut);font-size:12px}
+@media(max-width:860px){.ftr .cols{grid-template-columns:1fr 1fr}.ftr .cols>div:first-child,.ftr .cols>div:last-child{grid-column:1/-1}}
+/* catalog */
+.crumbs{padding-block:22px 0;font-size:12px;color:var(--mut);letter-spacing:.06em}
+.crumbs a:hover{color:var(--fg)}
+.pg-h{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-block:18px 24px}
+.pg-h h1{font-size:clamp(30px,4vw,48px);font-weight:200}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-block:14px;border-top:1px solid var(--line)}
+.sel{border:1px solid var(--line);background:var(--surface);height:40px;padding:0 12px;font-size:13px;min-width:0}
+.fbtn{display:none;height:40px;padding:0 16px;border:1px solid var(--fg);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.chips{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:16px}
+.chip{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:var(--surface);padding:5px 12px;font-size:12px}
+.chip.clr{border:0;background:none;text-decoration:underline;color:var(--mut)}
+.cat-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:48px;align-items:start}
+.side{position:sticky;top:calc(80px + env(safe-area-inset-top,0px));max-height:calc(100vh - 100px);overflow:auto;padding-right:6px}
+.fs{padding-block:18px;border-top:1px solid var(--line)}
+.fs:first-child{border-top:0;padding-top:0}
+.fs h4{margin:0 0 12px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:500}
+.ck{display:flex;align-items:center;gap:10px;padding:4px 0;font-size:14px;cursor:pointer}
+.ck input{accent-color:var(--accent);width:15px;height:15px;margin:0}
+.ck span.n{margin-left:auto;color:var(--mut);font-size:12px}
+.scroll{max-height:230px;overflow:auto}
+.sw{display:flex;gap:8px;flex-wrap:wrap}
+.sw button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);position:relative}
+.sw button.on{outline:2px solid var(--fg);outline-offset:2px}
+.sz{display:flex;gap:6px;flex-wrap:wrap}
+.sz button{min-width:42px;height:36px;padding:0 8px;border:1px solid var(--line);font-size:13px;background:var(--surface)}
+.sz button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.sz button.dis{opacity:.35;text-decoration:line-through;cursor:not-allowed}
+.rng{display:grid;gap:10px}
+.rng input[type=range]{width:100%;accent-color:var(--accent)}
+.rng .v{display:flex;justify-content:space-between;font-size:13px;font-variant-numeric:tabular-nums}
+.empty{padding:80px 0;text-align:center;color:var(--mut)}
+.empty h2{color:var(--fg);font-size:30px;margin-bottom:10px}
+.empty .btn{margin-top:24px}
+.drawer-x{display:none}
+@media(max-width:900px){
+  .cat-layout{grid-template-columns:1fr}
+  .fbtn{display:inline-flex;align-items:center}
+  .side{display:none}
+  .cat-layout.open .side{display:block;position:fixed;inset:0;z-index:70;max-height:none;background:var(--surface);padding:calc(16px + env(safe-area-inset-top,0px)) max(20px,env(safe-area-inset-right,0px)) calc(96px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px))}
+  .drawer-x{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:71;background:var(--surface);border-top:1px solid var(--line);padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .cat-layout:not(.open) .drawer-x{display:none}
+}
+/* product */
+.prod{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:64px;padding-block:24px 0;align-items:start}
+.prod .ph{aspect-ratio:3/4;max-width:100%}
+.pinfo h1{font-size:clamp(26px,3vw,38px);font-weight:200;margin:10px 0 6px;overflow-wrap:anywhere}
+.pinfo .price{font-size:22px;margin:14px 0 22px}
+.pinfo .lbl{font-size:11px;letter-spacing:.2em;text-transform:uppercase;font-weight:500;margin:22px 0 10px;display:flex;justify-content:space-between}
+.pinfo .lbl span{color:var(--mut);font-weight:300;letter-spacing:.04em;text-transform:none;font-size:13px}
+.pinfo .buy{display:flex;gap:10px;margin-top:26px}
+.pinfo .buy .btn{flex:1}
+.pinfo .fav{width:48px;height:48px;border:1px solid var(--fg);display:grid;place-items:center}
+.err{color:var(--sale);font-size:13px;min-height:20px;margin-top:8px}
+details{border-top:1px solid var(--line);padding:16px 0}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:400;list-style:none;display:flex;justify-content:space-between}
+summary::after{content:"+"}details[open] summary::after{content:"–"}
+summary::-webkit-details-marker{display:none}
+details p{margin:12px 0 0;color:var(--mut)}
+@media(max-width:860px){.prod{grid-template-columns:1fr;gap:28px}}
+/* cart + checkout */
+.two{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:56px;align-items:start;padding-block:8px 0}
+@media(max-width:960px){.two{grid-template-columns:1fr;gap:36px}}
+.li{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:18px;padding-block:20px;border-top:1px solid var(--line)}
+.li:last-child{border-bottom:1px solid var(--line)}
+.li .ph{aspect-ratio:3/4}
+.li .nm{overflow-wrap:anywhere}
+.li .meta{color:var(--mut);font-size:13px;margin-top:2px}
+.li .right{text-align:right;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;gap:12px}
+.qty{display:inline-flex;border:1px solid var(--line);background:var(--surface)}
+.qty button{width:34px;height:34px;font-size:16px}
+.qty span{width:34px;display:grid;place-items:center;font-size:14px}
+.rm{font-size:12px;color:var(--mut);text-decoration:underline}
+.sum{background:var(--surface);padding:28px;border:1px solid var(--line);position:sticky;top:calc(88px + env(safe-area-inset-top,0px))}
+.sum h3{font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:500;margin-bottom:18px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-variant-numeric:tabular-nums}
+.row.t{border-top:1px solid var(--line);margin-top:10px;padding-top:16px;font-size:18px;font-weight:400}
+.row .m{color:var(--mut)}
+.frm{display:grid;gap:18px}
+.frm .g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:560px){.frm .g2{grid-template-columns:1fr}}
+.fld label{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px;font-weight:400}
+.fld input,.fld textarea{width:100%;height:48px;border:1px solid var(--line);background:var(--surface);padding:0 14px;outline:0}
+.fld textarea{height:84px;padding:12px 14px;resize:vertical}
+.fld input:focus,.fld textarea:focus{border-color:var(--fg)}
+.fld.bad input{border-color:var(--sale)}
+.fld .e{color:var(--sale);font-size:12px;margin-top:4px;min-height:0}
+.opt{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);background:var(--surface);padding:14px 16px;cursor:pointer}
+.opt input{accent-color:var(--accent);margin-top:4px}
+.opt small{display:block;color:var(--mut);font-size:13px}
+.opt:has(input:checked){border-color:var(--fg)}
+.h3s{font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:500;margin:34px 0 14px}
+.h3s:first-child{margin-top:0}
+.done{max-width:520px;margin:0 auto;padding:90px 0 0;text-align:center}
+.done h1{font-size:40px;font-weight:200;margin:12px 0}
+.done p{color:var(--mut)}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:var(--fg);color:var(--bg);padding:14px 20px;display:flex;gap:18px;align-items:center;z-index:90;font-size:14px;transition:.25s;max-width:calc(100vw - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast a{text-decoration:underline;white-space:nowrap}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div id="root"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+var BASE='https://brandshop.in.ua/media/product_photos/';
+var CATS={1:'Джинси',29:'Футболки',16:'Взуття весна/осінь',19:'Взуття літо',22:'Сумки',31:'Шорти джинсові',32:'Шорти текстильні',33:'Шорти плавальні',7:'Спортивні штани',17:'Костюми весна/осінь',21:'Костюми літо',20:'Костюми зима',10:'Білизна',15:'Шкарпетки',25:'Шапки',26:'Кофти та худі',27:'Куртки',28:'Жилетки'};
+var GROUPS=[['Джинси',[1],2053],['Футболки',[29],2399],['Кофти та худі',[26],2219],['Куртки',[27],716],['Жилетки',[28],2359],['Штани',[7],2372],['Шорти',[31,32,33],2432],['Костюми',[17,20,21],537],['Взуття',[16,19],389],['Сумки',[22],2454],['Шапки',[25],1618],['Білизна та шкарпетки',[10,15],1266]];
+/* snapshot of brandshop.in.ua/feed.xml: [id,title,catalog_id,article,photo suffix,price_table,price_site,sizes] */
+var D=[
+[2053,'Джинси Stone Island сині',1,'Дж-642','',4995,4995,'30,32,34,36,38'],
+[2052,'Джинси Mom чорні на флісі',1,'Дж-641','',3195,3195,'31,34,36'],
+[2051,'Джинси Mom сині на флісі',1,'Дж-640','',3195,3195,'32,33,34,36,38'],
+[2050,'Джинси Boss сині на флісі',1,'Дж-639','',4095,4095,'34,36,38,40'],
+[2048,'Джинси Boss коричневі на флісі',1,'Дж-637','',4095,4095,'32,33,36,38,40'],
+[2047,'Джинси Mom сині',1,'Дж-636','',2500,2500,'29,30,31,32,33'],
+[2046,'Джинси Kenzo темно-сірі',1,'Дж-635','',3495,3495,'30,31,33,34,38'],
+[2045,'Джинси Brunello Cucinelli темно-сині',1,'Дж-634','',3695,3695,'29,30,31'],
+[2044,'Джинси Lora Piano темно-сині',1,'Дж-633','',3795,3795,'32,36,38,40'],
+[2042,'Джинси Tom Ford темно-сірі',1,'Дж-631','',3795,3795,'33,38,40,42,44'],
+[2041,'Джинси Armani чорні',1,'Дж-630','',3595,3595,'30,31,32,33,38,40,44'],
+[2040,'Джинси Stefano Ricci сині',1,'Дж-628','',4500,4050,'36'],
+[2033,'Джинси Chrome Hearts сині',1,'Дж-619','',3695,3300,'36'],
+[2032,'Джинси Chrome Hearts сині',1,'Дж-618','',3695,3695,'30,31,33,34,36'],
+[2029,'Джинси Calvin Klein чорні',1,'Дж-614','',1998,1750,'32'],
+[2028,'Джинси Lora Piano темно-сині',1,'Дж-613','',2795,2500,'31'],
+[2027,'Джинси Dolce & Gabbana темно-сині',1,'Дж-612','',2795,2500,'33'],
+[2023,'Джинси сині прямі',1,'Дж-392','',2250,2250,'S,M,XL,2XL'],
+[2019,'Джинси Dolce & Gabbana сірі',1,'Дж-387','',3500,3500,'34,36,38'],
+[2016,'Джинси Armani чорні',1,'Дж-384','',3500,3150,'33'],
+[2001,'Джинси сині на манжеті',1,'Дж-607','',1998,1998,'30,31,32,33,34,36'],
+[1970,'Джинси Mom сині з потертостями',1,'Дж-603','',1995,1750,'30'],
+[1757,'Джинси Stefano Ricci сині',1,'Дж-599','',2995,2995,'30,31'],
+[1715,'Джинси Chrome Hearts світлі',1,'Дж-598','',4500,4500,'30,33'],
+[141,'Джинси Dsquared світло-сині',1,'Дж-118','_O9Ihm5l',1298,1298,'32,33'],
+[140,'Джинси Bruno Giordano темно-сірі',1,'Дж-198','_BvJGTpn',2300,2050,'32,34'],
+[17,'Джинси Armani сині',1,'Дж-443','_klcDc4v',2990,2650,'32'],
+[16,'Джинси Dolce & Gabbana сині',1,'Дж-442','_xx4q3wq',2990,2650,'32'],
+[15,'Джинси Louis Vuitton чорні на флісі',1,'Дж-436','_hry3DYf',1998,1750,'33'],
+[5,'Джинси Prada світлі',1,'Дж-343','_xCFTCoL',2100,2100,'30,33'],
+[2399,'Футболка Dolce & Gabbana сіра',29,'Фут-904','',2798,2798,'S,M,L,XL,2XL,3XL'],
+[2398,'Футболка Chrome Hearts чорна',29,'Фут-903','',2798,2798,'M,L,XL,2XL,3XL'],
+[2395,'Футболка біла',29,'Фут-899','',995,850,'3XL'],
+[1730,'Футболка Chrome Hearts біла',29,'Фут-845','_789pu5u',2995,2995,'L,XL'],
+[1093,'Футболка Boss синя батал',29,'Фут-833','_iFDOPsM',1398,1398,'4XL,5XL,6XL'],
+[1035,'Футболка Y.Two біла',29,'Фут-578','_gVAlAXk',695,600,'3XL'],
+[405,'Лофери Lora Piano чорні замша',16,'Об-266','_oUTh2lK',5500,4950,'43'],
+[402,'Кросівки Stefano Ricci чорні шкіра',16,'Об-449','_bkykLwj',6995,6250,'40'],
+[399,'Кросівки Stefano Ricci чорні текстиль',16,'Об-446','_TyaqS8x',8800,8800,'40,41,42,45'],
+[398,'Кеди Billionaire сині замша/шкіра',16,'Об-407','_eW10Lxq',8600,8600,'40,41'],
+[397,'Кросівки Premiata чорні шкіра/текстиль',16,'Об-445','_1S1WdIU',4595,4595,'40,41,42,43,44,45'],
+[394,'Лофери сірі замша',16,'Об-429','_iPNBtw0',3895,3895,'39,45'],
+[393,'Лофери чорні шкіра',16,'Об-428','_RxrqzB8',3895,3895,'39,41,42,44'],
+[389,'Кросівки Kiton чорні',16,'Об-421','_R2eYbgH',6995,6995,'40,41,43,44,45'],
+[388,'Кеди Dolce & Gabbana чорні шкіра',16,'Об-420','_3PAENFe',4995,4450,'45'],
+[386,'Кеди Louis Vuitton чорні',16,'Об-414','_3coVqaI',6800,6100,'42'],
+[385,'Кросівки Prada чорні шкіра',16,'Об-323','_sNo1RmG',5500,5500,'40,44,45'],
+[381,'Кросівки Armani чорні',16,'Об-410','_h7q5npB',3500,3500,'41,44,45'],
+[376,'Кеди Rick Hardi чорні на липучках',16,'Об-248','_DM4YcSE',3300,3300,'40,41,42,43,44,45'],
+[373,'Лофери Edge сині замша',16,'Об-177','_efdpKcD',3098,3098,'40,42,43,44'],
+[371,'Кросівки Edge сині текстиль',16,'Об-403','_PhEFDio',3198,3198,'40,44'],
+[370,'Кросівки Lora Piano чорні',16,'Об-400','_x6SDHFs',4995,4995,'40,41,42,43'],
+[369,'Кеди Gucci бежеві',16,'Об-395','_BieNVPO',5500,5500,'41,44'],
+[368,'Кросівки Dolce & Gabbana чорні',16,'Об-184','_QvkjmgO',5500,4950,'40'],
+[2463,'Сумка дорожня Prada чорна',22,'Сум-358','',3998,3998,''],
+[2462,'Сумка дорожня Versace',22,'Сум-243','',3998,3998,''],
+[2461,'Рюкзак Prada чорний',22,'Сум-245','',3998,3998,''],
+[2460,'Сумка-бананка Prada чорна',22,'Сум-363','',2195,2195,''],
+[2459,'Сумка Burberry чорна',22,'Сум-658','',2195,2195,''],
+[2457,'Сумка Prada чорна',22,'Сум-656','',3998,3998,''],
+[2454,'Сумка Stefano Ricci чорна',22,'Сум-653','',6500,6500,''],
+[2453,'Рюкзак чорний',22,'Сум-652','',6995,6995,''],
+[2451,'Сумка для документів чорна',22,'Сум-650','',6995,6995,''],
+[2447,'Сумка плетіння чорна',22,'Сум-646','',5500,5500,''],
+[2446,'Сумка-слінг Stefano Ricci чорна',22,'Сум-642','',10495,10495,''],
+[2445,'Сумка Prada чорна',22,'Сум-641','',2795,2795,''],
+[2428,'Шорти джинсові Chrome Hearts світло-блакитні',31,'Дш-68','',3200,3200,'M,L,XL,2XL'],
+[2426,'Шорти джинсові Chrome Hearts темно-сірі',31,'Дш-65','',2995,2995,'S,M,L,XL,2XL,3XL'],
+[2425,'Шорти джинсові Chrome Hearts світлі',31,'Дш-66','',2995,2995,'S,M,L,XL,2XL,3XL'],
+[2424,'Шорти джинсові Chrome Hearts світлі',31,'Дш-64','',2895,2895,'31,32,33,34,36,38'],
+[2421,'Шорти джинсові Chrome Hearts сині',31,'Дш-62','',2895,2895,'31,32,33,34,36,38'],
+[2435,'Шорти Chrome Hearts чорні',32,'Шор-127','',3200,3200,'S,M,L,XL'],
+[2433,'Шорти Chrome Hearts чорні',32,'Шор-125','',2495,2495,'M,L,XL,2XL'],
+[2432,'Шорти Stone Island чорні',32,'Шор-124','',2500,2250,'L'],
+[2431,'Шорти Stone Island сіро-зелені',32,'Шор-123','',2500,2500,'S,M,L,XL'],
+[2429,'Шорти Balenciaga сірі',32,'Шор-121','',2600,2600,'XL,2XL'],
+[1956,'Шорти Armani чорні льон',32,'Шор-120','',1890,1700,'40'],
+[1953,'Шорти Lora Piano сині льон',32,'Шор-117','',2900,2600,'33'],
+[1378,'Шорти плавальні Y.Two чорні',33,'Пл-75','',895,895,'M,XL'],
+[1374,'Шорти плавальні Louis Vuitton сині',33,'Пл-85','',1998,1750,'M'],
+[1373,'Шорти плавальні Dior сині',33,'Пл-84','',1400,1400,'M,L,XL'],
+[1372,'Шорти плавальні Louis Vuitton чорні',33,'Пл-83','',1400,1400,'L,XL'],
+[2377,'Штани спортивні Chrome Hearts сірі',7,'Шт-123','',3200,3200,'M,L,XL,2XL,3XL'],
+[2376,'Штани спортивні Chrome Hearts чорні',7,'Шт-126','',3200,3200,'M,L,XL,2XL,3XL'],
+[2375,'Штани спортивні Maison Margiela чорні',7,'Шт-125','',3200,3200,'XL,2XL,3XL'],
+[2372,'Штани спортивні Stone Island сірі',7,'Шт-122','',3395,3395,'M,L,XL,2XL,3XL'],
+[2370,'Штани Stone Island чорні на флісі',7,'Шт-120','',3995,3995,'S,M,L,2XL'],
+[2369,'Штани сірі на флісі',7,'Шт-119','',1998,1750,'L'],
+[2368,'Штани Stone Island сині',7,'Шт-116','',4495,4495,'30,32,34,36'],
+[543,'Костюм джинсовий Calvin Klein темно-бежевий',17,'Кос-325','_L2ksOmc',3790,3790,'S,M,L'],
+[542,'Костюм джинсовий Richberg хакі',17,'Кос-324','_xk6dcXw',3790,3790,'L,XL'],
+[540,'Костюм Lora Piano чорний',17,'Кос-320','_wM6HMga',5600,5000,'L'],
+[538,'Костюм Armani чорний',17,'Кос-314','_UYD0xUT',4998,4450,'M'],
+[537,'Костюм Brunello Cucinelli сірий',17,'Кос-312','_Jk3kM9u',6998,6998,'M,L,XL,2XL'],
+[534,'Костюм-трійка Kiton синій',17,'Кос-304','_ESjWytl',7800,7800,'S,M'],
+[533,'Костюм Billionaire чорний велюр',17,'Кос-286','_NZ8fXgE',4998,4450,'4XL'],
+[1893,'Костюм Difransel чорний',21,'Кл-153','',2695,2400,'L'],
+[1892,'Костюм Difransel коричневий',21,'Кл-152','',2695,2695,'S,M,L,XL'],
+[1891,'Костюм Armani чорний',21,'Кл-151','',2598,2598,'L,XL,2XL'],
+[1889,'Костюм Boss синій',21,'Кл-149','',2598,2598,'XL,2XL,3XL'],
+[653,'Костюм Stefano Ricci чорний льон',21,'Кос-247','_2wsxt6A',4300,3850,'L'],
+[649,'Костюм Armani колір слонової кістки',21,'Кл-124','_ah5J8im',2500,2250,'M'],
+[2280,'Костюм Calvin Klein графіт',20,'Кос-480','',4195,4195,'S,M'],
+[2279,'Костюм Armani графіт',20,'Кос-479','',4195,4195,'S,M,L'],
+[2277,'Костюм Chrome Hearts темно-сірий флісовий',20,'Кос-477','',3995,3995,'S,M,L,XL'],
+[2276,'Костюм Chrome Hearts світло-сірий флісовий',20,'Кос-476','',3995,3995,'S,M,L'],
+[2275,'Костюм коричневий флісовий',20,'Кос-475','',6500,6500,'L,2XL,3XL'],
+[1266,'Білизна Calvin Klein набір чорний',10,'Тр-65','_TvwxsEt',1350,1200,'L'],
+[1265,'Білизна Lacoste набір чорний',10,'Тр-64','_U9uJ4CR',1350,1350,'M,L'],
+[1263,'Білизна Boss набір',10,'Тр-62','_VltFLeq',998,850,'L'],
+[1260,'Білизна Calvin Klein набір',10,'Тр-49','_VP9Lb6n',1110,950,'L'],
+[1258,'Білизна Dior набір',10,'Тр-43','_VWrgdXT',1110,950,'M'],
+[1649,'Набір шкарпеток Boss, 12 пар',15,'Н-63','',1398,1398,''],
+[1644,'Шкарпетки Tommy Hilfiger, набір 6 пар',15,'Н-58','',850,850,''],
+[1643,'Шкарпетки Calvin Klein, набір 6 пар',15,'Н-56','',850,850,''],
+[1642,'Шкарпетки Armani, набір 6 пар',15,'Н-54','',1298,1298,''],
+[1648,'Шкарпетки Armani сірі',15,'Н-62','',125,125,''],
+[2244,'Шльопанці Brunello Cucinelli чорні шкіра',19,'Тап-044','',3295,3295,'40,45'],
+[2243,'Шльопанці Brunello Cucinelli сині замша',19,'Тап-043','',3295,3295,'40,41,42'],
+[2008,'Шльопанці Baldinini чорні',19,'Тап-040','',4295,4295,'40,42,45'],
+[2007,'Шльопанці Baldinini чорні',19,'Тап-039','',4695,4695,'41,42,43,44,45'],
+[1869,'Шльопанці Armani чорні шкіра',19,'Тап-017','',1298,1298,'40,45'],
+[1618,'Шапка Stone Island чорна',25,'Шап-181','',898,898,''],
+[1617,'Шапка Stone Island синя',25,'Шап-176','',850,850,''],
+[1612,'Шапка Armani синя',25,'Шап-143','',750,750,''],
+[1611,'Шапка Boss чорна',25,'Шап-141','',750,750,''],
+[1610,'Шапка Stone Island чорна',25,'Шап-55','',795,795,''],
+[2222,'Кофта Stone Island чорна',26,'Ко-1139','',3695,3695,'S,M,XL,2XL'],
+[2220,'Зіп-худі CP Company чорна',26,'Ко-1137','',3395,3395,'M,L,XL,2XL'],
+[2219,'Зіп-худі Stone Island чорна',26,'Ко-1136','',2995,2995,'S,M,L,XL'],
+[2218,'Світшот Chrome Hearts сірий',26,'Ко-1135','',3500,3500,'M,L,XL'],
+[2213,'Худі Calvin Klein чорне на флісі',26,'Ко-1129','',2200,2200,'S,M,L'],
+[2091,'Кофта You Two бежева',26,'Ко-980','',1695,1500,'L'],
+[2089,'Кофта You Two темно-синя',26,'Ко-978','',1695,1695,'M,L,XL,2XL,3XL'],
+[2088,'Кофта You Two світло-бежева',26,'Ко-977','',1695,1695,'M,XL,2XL,3XL'],
+[2086,'Кофта Boss чорна',26,'Ко-975','',2700,2700,'XL,2XL'],
+[2084,'Кофта Lora Piano темно-синя',26,'Ко-973','',2100,2100,'M,L,XL'],
+[2079,'Кофта Brunello Cucinelli чорна',26,'Ко-967','',2100,2100,'M,L,XL,3XL'],
+[2074,'Кофта Prada чорна',26,'Ко-960','',2995,2995,'S,L,XL,2XL'],
+[2070,'Кофта Stone Island чорна',26,'Ко-956','',2450,2450,'S,M,L,XL,2XL'],
+[2069,'Кофта Armani чорна',26,'Ко-955','',2995,2995,'XL,2XL'],
+[2065,'Кофта Stone Island чорна',26,'Ко-949','',2995,2650,'2XL'],
+[2064,'Кофта Stone Island синя',26,'Ко-948','',3595,3200,'L'],
+[721,'Куртка Lora Piano чорна',27,'Ку-260','_9M3mGWn',3600,3200,'M'],
+[719,'Куртка Boss чорна',27,'Ку-366','_41yrkPY',3300,2950,'L'],
+[718,'Куртка Armani чорна',27,'Ку-348','_M2W6SAc',3600,3200,'2XL'],
+[716,'Куртка Prada чорна',27,'Ку-364','_ozzT7Q9',7500,7500,'L,XL,2XL'],
+[714,'Куртка Puduoli шкіра',27,'Ку-135','_MwZHfcl',2795,2795,'M,L,XL,3XL,4XL'],
+[712,'Куртка замшева чорна',27,'Ку-124','_O0fSuC4',2750,2750,'M,XL'],
+[2359,'Жилет Armani чорний',28,'Ж-153','',3200,3200,'L,XL,2XL,3XL'],
+[2358,'Жилет Brunello Cucinelli чорний',28,'Ж-151','',2798,2798,'L,2XL'],
+[2356,'Жилет Louis Vuitton чорний',28,'Ж-149','',2798,2798,'M,XL,2XL,3XL'],
+[2355,'Жилет Lora Piano чорний',28,'Ж-148','',2798,2798,'M,2XL,3XL'],
+[2354,'Жилет чорний',28,'Ж-147','',2200,2200,'XL,2XL,3XL']
+];
+var BR=[['Stone Island',/stone island/i],['Chrome Hearts',/chrome hearts/i],['Dolce & Gabbana',/dolce/i],['Brunello Cucinelli',/brunello/i],['Stefano Ricci',/stefano/i],['Louis Vuitton',/louis vuitton/i],['Calvin Klein',/calvin klein/i],['Tommy Hilfiger',/tommy/i],['Maison Margiela',/margiela/i],['Lora Piano',/lora piano/i],['Rick Hardi',/rick hardi/i],['You Two',/you two|y\.two/i],['CP Company',/cp company/i],['Billionaire',/billionaire/i],['Premiata',/premiata/i],['Balenciaga',/balenciaga/i],['Armani',/armani/i],['Prada',/prada/i],['Boss',/boss/i],['Kiton',/kiton/i],['Gucci',/gucci/i],['Lacoste',/lacoste/i],['Dior',/dior/i],['Burberry',/burberry/i],['Versace',/versace/i],['Baldinini',/baldinini/i],['Puduoli',/puduoli/i],['Kenzo',/kenzo/i],['Tom Ford',/tom ford/i],['Edge',/edge/i],['Difransel',/difransel/i],['Dsquared',/dsquared/i],['Bruno Giordano',/bruno giordano/i],['Richberg',/richberg/i]];
+var COLS={'Чорний':'#17181a','Сірий':'#8c8e93','Білий':'#f5f5f1','Синій':'#2b3f6b','Блакитний':'#9db7d5','Бежевий':'#cdb99a','Коричневий':'#6b4a33','Зелений':'#55603f','Мікс':'linear-gradient(90deg,#2b3f6b 33%,#8c8e93 33% 66%,#17181a 66%)'};
+var SIZE_ORDER=['S','M','L','XL','2XL','3XL','4XL','5XL','6XL'];
+var ONE='Один розмір';
+function detColors(t,c){
+  var s=t.toLowerCase().replace(/\([^)]*\)/g,'');var r=[];var beige=/беж|біж|слонов/.test(s);
+  if(/світл|блакит/.test(s)&&!beige&&!/сір/.test(s))r.push('Блакитний');
+  else if(/син/.test(s))r.push('Синій');
+  if(/сір|графіт/.test(s))r.push('Сірий');
+  if(/чорн/.test(s))r.push('Чорний');
+  if(/біл/.test(s))r.push('Білий');
+  if(beige)r.push('Бежевий');
+  if(/коричн/.test(s))r.push('Коричневий');
+  if(/хакі|зелен/.test(s))r.push('Зелений');
+  return r.length?r:['Мікс'];
+}
+var P=D.map(function(r){
+  var b='Без бренду';for(var i=0;i<BR.length;i++){if(BR[i][1].test(r[1])){b=BR[i][0];break}}
+  var sz=r[7]?r[7].split(','):[ONE];
+  return {id:r[0],t:r[1],c:r[2],a:r[3],sf:r[4],pt:r[5],ps:r[6],s:sz,b:b,col:detColors(r[1],r[2]),sale:r[6]<r[5]};
+});
+var BY={};P.forEach(function(p){BY[p.id]=p});
+function imgUrl(p){return BASE+encodeURIComponent(p.a)+'_main'+p.sf+'.jpg'}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function money(n){return new Intl.NumberFormat('uk-UA').format(n)+' ₴'}
+function szSort(a,b){var ia=SIZE_ORDER.indexOf(a),ib=SIZE_ORDER.indexOf(b);if(ia>-1&&ib>-1)return ia-ib;if(ia>-1)return 1;if(ib>-1)return -1;return (parseFloat(a)||0)-(parseFloat(b)||0)}
+var MINP=Math.floor(Math.min.apply(null,P.map(function(p){return p.ps}))/50)*50;
+var MAXP=Math.ceil(Math.max.apply(null,P.map(function(p){return p.ps}))/50)*50;
+/* state */
+var mem={};
+function ls(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return mem[k]!==undefined?mem[k]:def}}
+function ss(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+var favs=ls('bs_fav',[]).filter(function(i){return BY[i]});
+var cart=ls('bs_cart',[]).filter(function(l){return BY[l.id]});
+function newF(){return {cats:[],brands:[],colors:[],sizes:[],min:MINP,max:MAXP,sale:false,q:'',sort:'new',page:1}}
+var F=newF();
+var $root=document.getElementById('root');
+var IC={
+ heart:'<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.3A4.2 4.2 0 0 1 12 8a4.2 4.2 0 0 1 7.5 2.2c0 5.7-7.5 10.3-7.5 10.3z"/></svg>',
+ bag:'<svg viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>',
+ search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
+ menu:'<svg viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></svg>',
+ x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+};
+function isFav(id){return favs.indexOf(id)>-1}
+function toggleFav(id){var i=favs.indexOf(id);if(i>-1)favs.splice(i,1);else favs.push(id);ss('bs_fav',favs);syncHdr();document.querySelectorAll('[data-fav="'+id+'"]').forEach(function(b){b.classList.toggle('on',isFav(id))});if(route().name==='favorites')render()}
+function cartCount(){return cart.reduce(function(a,l){return a+l.qty},0)}
+function cartSum(){return cart.reduce(function(a,l){return a+BY[l.id].ps*l.qty},0)}
+function addCart(id,size){var l=cart.find(function(x){return x.id===id&&x.s===size});if(l)l.qty++;else cart.push({id:id,s:size,qty:1});ss('bs_cart',cart);syncHdr()}
+function syncHdr(){var f=document.getElementById('cf'),c=document.getElementById('cc');if(!f)return;f.textContent=favs.length;f.hidden=!favs.length;var n=cartCount();c.textContent=n;c.hidden=!n}
+var tt;function toast(html){var t=document.getElementById('toast');t.innerHTML=html;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},3200)}
+/* components */
+function ph(p,extra){return '<div class="ph" data-b="'+esc(p.b)+'"'+(extra||'')+'><img loading="lazy" alt="'+esc(p.t)+'" src="'+imgUrl(p)+'"></div>'}
+function priceH(p){return p.sale?'<span class="price"><b>'+money(p.ps)+'</b><s>'+money(p.pt)+'</s></span>':'<span class="price">'+money(p.ps)+'</span>'}
+function card(p){
+  var pc=p.sale?Math.round((1-p.ps/p.pt)*100):0;
+  return '<article class="card"><button class="fav'+(isFav(p.id)?' on':'')+'" data-fav="'+p.id+'" data-act="fav" aria-label="В обране">'+IC.heart+'</button>'+(pc?'<span class="badge">−'+pc+'%</span>':'')+
+  '<a href="#product-'+p.id+'">'+ph(p)+'<div class="br">'+esc(p.b)+'</div><div class="tt">'+esc(p.t)+'</div>'+priceH(p)+
+  '<div class="dots">'+p.col.map(function(c){return '<i class="dot" title="'+c+'" style="background:'+COLS[c]+'"></i>'}).join('')+'</div></a></article>'
+}
+function header(r){
+  var nm=r.name;
+  return '<div class="ann">Доставка по Україні · Оплата при отриманні</div><header class="hdr"><div class="wrap"><div class="in">'+
+  '<nav class="nav" id="nav"><a href="#catalog" data-act="allcat" class="'+(nm==='catalog'?'on':'')+'">Каталог</a><a href="#catalog" data-act="sortnew">Новинки</a><a href="#catalog" data-act="onsale">Знижки</a><a href="#favorites" class="'+(nm==='favorites'?'on':'')+'">Обране</a></nav>'+
+  '<button class="ib burger" data-act="menu" aria-label="Меню">'+IC.menu+'</button>'+
+  '<a href="#home" class="logo">BrandShop</a>'+
+  '<div class="tools"><button class="ib" data-act="search" aria-label="Пошук">'+IC.search+'</button><a class="ib" href="#favorites" aria-label="Обране">'+IC.heart+'<span class="cnt" id="cf" hidden></span></a><a class="ib" href="#cart" aria-label="Кошик">'+IC.bag+'<span class="cnt" id="cc" hidden></span></a></div></div></div>'+
+  '<div class="sbar" id="sbar" hidden><div class="wrap"><form id="sform"><input id="sq" placeholder="Пошук: бренд, річ, колір" autocomplete="off"><button type="button" class="ib" data-act="search" aria-label="Закрити">'+IC.x+'</button></form></div></div></header>'
+}
+function footer(){
+  return '<footer class="ftr"><div class="wrap"><div class="cols"><div><div class="big">BrandShop</div><p style="color:var(--hero-mut);max-width:320px;margin-top:16px">Чоловічий одяг, взуття та аксесуари. Нова колекція щотижня.</p></div>'+
+  '<div><h4>Магазин</h4><ul><li><a href="#catalog" data-act="allcat">Каталог</a></li><li><a href="#catalog" data-act="sortnew">Новинки</a></li><li><a href="#catalog" data-act="onsale">Знижки</a></li><li><a href="#favorites">Обране</a></li></ul></div>'+
+  '<div><h4>Покупцям</h4><ul><li><a href="#cart">Кошик</a></li><li><a href="#checkout">Оформлення</a></li><li><a href="#home">Доставка і оплата</a></li><li><a href="#home">Обмін і повернення</a></li></ul></div>'+
+  '<div><h4>Новини колекцій</h4><form data-act="sub"><input type="email" id="subm" placeholder="Ваш email" aria-label="Email"><button>Підписатись</button></form></div></div>'+
+  '<div class="bot"><span>© 2026 BrandShop</span><span>Прототип магазину · дані з feed.xml</span></div></div></footer>'
+}
+/* filtering */
+function match(p,skip){
+  if(skip!=='cats'&&F.cats.length&&F.cats.indexOf(p.c)<0)return false;
+  if(skip!=='brands'&&F.brands.length&&F.brands.indexOf(p.b)<0)return false;
+  if(skip!=='colors'&&F.colors.length&&!p.col.some(function(c){return F.colors.indexOf(c)>-1}))return false;
+  if(skip!=='sizes'&&F.sizes.length&&!p.s.some(function(s){return F.sizes.indexOf(s)>-1}))return false;
+  if(p.ps<F.min||p.ps>F.max)return false;
+  if(F.sale&&!p.sale)return false;
+  if(F.q){var h=(p.t+' '+p.b+' '+p.a+' '+CATS[p.c]).toLowerCase();var ws=F.q.toLowerCase().split(/\s+/);for(var i=0;i<ws.length;i++){if(h.indexOf(ws[i])<0)return false}}
+  return true
+}
+function sorted(list){
+  var a=list.slice();
+  if(F.sort==='new')a.sort(function(x,y){return y.id-x.id});
+  if(F.sort==='asc')a.sort(function(x,y){return x.ps-y.ps});
+  if(F.sort==='desc')a.sort(function(x,y){return y.ps-x.ps});
+  if(F.sort==='disc')a.sort(function(x,y){return (y.sale?1-y.ps/y.pt:0)-(x.sale?1-x.ps/x.pt:0)});
+  return a
+}
+function facet(key,getter){var m={};P.forEach(function(p){if(match(p,key)){getter(p).forEach(function(v){m[v]=(m[v]||0)+1})}});return m}
+function side(){
+  var cc=facet('cats',function(p){return [p.c]}),bc=facet('brands',function(p){return [p.b]}),kc=facet('colors',function(p){return p.col}),sc=facet('sizes',function(p){return p.s});
+  var cats=Object.keys(CATS).map(Number).sort(function(a,b){return CATS[a].localeCompare(CATS[b],'uk')});
+  var brands=Object.keys(bc).concat(F.brands.filter(function(b){return !bc[b]})).filter(function(v,i,a){return a.indexOf(v)===i}).sort(function(a,b){return a.localeCompare(b)});
+  var allB=BR.map(function(x){return x[0]}).filter(function(b){return P.some(function(p){return p.b===b})}).sort();
+  var sizes=Object.keys(sc).concat(F.sizes).filter(function(v,i,a){return a.indexOf(v)===i}).sort(szSort);
+  return '<div class="fs"><h4>Категорія</h4><div class="scroll">'+cats.map(function(c){var n=cc[c]||0;return '<label class="ck"><input type="checkbox" data-f="cats" value="'+c+'"'+(F.cats.indexOf(c)>-1?' checked':'')+'>'+CATS[c]+'<span class="n">'+n+'</span></label>'}).join('')+'</div></div>'+
+  '<div class="fs"><h4>Ціна</h4><div class="rng"><div class="v"><span id="vmin">'+money(F.min)+'</span><span id="vmax">'+money(F.max)+'</span></div>'+
+  '<input type="range" id="rmin" min="'+MINP+'" max="'+MAXP+'" step="50" value="'+F.min+'" aria-label="Ціна від"><input type="range" id="rmax" min="'+MINP+'" max="'+MAXP+'" step="50" value="'+F.max+'" aria-label="Ціна до"></div></div>'+
+  '<div class="fs"><h4>Колір</h4><div class="sw">'+Object.keys(COLS).map(function(c){return '<button data-f="colors" data-v="'+c+'" class="'+(F.colors.indexOf(c)>-1?'on':'')+'" title="'+c+(kc[c]?' ('+kc[c]+')':'')+'" aria-label="'+c+'" style="background:'+COLS[c]+'"></button>'}).join('')+'</div></div>'+
+  '<div class="fs"><h4>Розмір</h4><div class="sz">'+sizes.map(function(s){return '<button data-f="sizes" data-v="'+esc(s)+'" class="'+(F.sizes.indexOf(s)>-1?'on':'')+'">'+esc(s)+'</button>'}).join('')+'</div></div>'+
+  '<div class="fs"><h4>Бренд</h4><div class="scroll">'+allB.map(function(b){return '<label class="ck"><input type="checkbox" data-f="brands" value="'+esc(b)+'"'+(F.brands.indexOf(b)>-1?' checked':'')+'>'+esc(b)+'<span class="n">'+(bc[b]||0)+'</span></label>'}).join('')+'</div></div>'+
+  '<div class="fs"><label class="ck"><input type="checkbox" id="fsale"'+(F.sale?' checked':'')+'>Лише зі знижкою</label></div>'
+}
+function chipsH(){
+  var c=[];
+  F.cats.forEach(function(v){c.push(['cats',v,CATS[v]])});F.brands.forEach(function(v){c.push(['brands',v,v])});F.colors.forEach(function(v){c.push(['colors',v,v])});F.sizes.forEach(function(v){c.push(['sizes',v,'Розмір '+v])});
+  if(F.min>MINP||F.max<MAXP)c.push(['price','','Ціна '+F.min+'–'+F.max]);if(F.sale)c.push(['sale','','Зі знижкою']);if(F.q)c.push(['q','','«'+F.q+'»']);
+  if(!c.length)return '';
+  return c.map(function(x){return '<span class="chip">'+esc(x[2])+'<button data-act="unchip" data-k="'+x[0]+'" data-v="'+esc(x[1])+'" aria-label="Прибрати">×</button></span>'}).join('')+'<button class="chip clr" data-act="reset">Скинути все</button>'
+}
+var PER=24;
+function updateCatalog(){
+  var list=sorted(P.filter(function(p){return match(p)}));
+  var el=function(i){return document.getElementById(i)};
+  if(!el('grid'))return;
+  el('side').innerHTML=side();
+  el('chips').innerHTML=chipsH();
+  el('count').textContent=list.length+' '+(list.length===1?'товар':'товарів');
+  el('sort').value=F.sort;
+  var shown=list.slice(0,F.page*PER);
+  el('grid').innerHTML=shown.length?shown.map(card).join(''):'';
+  el('more').innerHTML=!shown.length?'<div class="empty"><h2>Нічого не знайдено</h2><p>Спробуйте змінити або скинути фільтри.</p><button class="btn ghost" data-act="reset">Скинути фільтри</button></div>':(shown.length<list.length?'<div style="text-align:center;margin-top:44px"><button class="btn ghost" data-act="more">Показати ще ('+(list.length-shown.length)+')</button></div>':'');
+  el('dx').textContent='Показати '+list.length;
+}
+function viewCatalog(){
+  $root.innerHTML=header({name:'catalog'})+'<main class="wrap"><div class="crumbs"><a href="#home">Головна</a> / Каталог</div><div class="pg-h"><div><div class="eyebrow">Чоловікам</div><h1>Каталог</h1></div><span id="count" class="eyebrow"></span></div>'+
+  '<div class="toolbar"><button class="fbtn" data-act="fopen">Фільтри</button><select class="sel" id="sort" aria-label="Сортування"><option value="new">Спочатку нові</option><option value="asc">Ціна: від низької</option><option value="desc">Ціна: від високої</option><option value="disc">Найбільша знижка</option></select></div>'+
+  '<div class="chips" id="chips"></div><div class="cat-layout" id="cl"><aside class="side" id="side"></aside><div><div class="grid g3" id="grid"></div><div id="more"></div></div><div class="drawer-x"><button class="btn solid block" data-act="fclose" id="dx">Показати</button></div></div></main>'+footer();
+  updateCatalog();
+}
+/* views */
+var homeTab='new';
+function newItems(){var by={};P.slice().sort(function(x,y){return y.id-x.id}).forEach(function(p){(by[p.c]=by[p.c]||[]).push(p)});var ks=Object.keys(by).sort(function(a,b){return by[b][0].id-by[a][0].id});var out=[],i=0;while(out.length<8&&i<6){ks.forEach(function(k){if(by[k][i]&&out.length<8)out.push(by[k][i])});i++}return out}
+function hitItems(){var top=['Stone Island','Chrome Hearts','Prada','Stefano Ricci','Brunello Cucinelli','Dolce & Gabbana','Louis Vuitton'];return P.filter(function(p){return top.indexOf(p.b)>-1&&p.ps>=2400}).sort(function(a,b){return ((a.id*7919)%101)-((b.id*7919)%101)}).slice(0,8)}
+function saleItems(){return P.filter(function(p){return p.sale}).sort(function(a,b){return (1-b.ps/b.pt)-(1-a.ps/a.pt)}).slice(0,8)}
+function tabItems(){return homeTab==='new'?newItems():homeTab==='hits'?hitItems():saleItems()}
+function viewHome(){
+  var pics=[716,2222,389].map(function(i){return ph(BY[i])}).join('');
+  var gcount=function(g){return P.filter(function(p){return g[1].indexOf(p.c)>-1}).length};
+  $root.innerHTML=header({name:'home'})+
+  '<section class="hero"><div class="wrap"><div class="in"><div class="txt"><div class="eyebrow">Колекція осінь — зима 2026</div><h1>Стриманий<br>силует <em>холодів</em></h1><p>Куртки, трикотаж і взуття у чорному, графітовому та глибокому синьому. Речі, які працюють разом.</p><div class="cta"><a class="btn lite" href="#catalog" data-act="sortnew">Нова колекція</a><a class="link" style="color:var(--hero-fg);align-self:center" href="#catalog" data-act="allcat">Увесь каталог</a></div></div><div class="pics">'+pics+'</div></div></div></section>'+
+  '<div class="wrap"><section class="sec"><div class="sec-h"><div><div class="eyebrow">Розділи</div><h2>Категорії</h2></div><a class="link" href="#catalog" data-act="allcat">Усі товари</a></div><div class="cats">'+
+  GROUPS.map(function(g){var rep=BY[g[2]]||P.find(function(p){return g[1].indexOf(p.c)>-1});return '<a class="cat" href="#catalog" data-act="gocat" data-cats="'+g[1].join(',')+'">'+ph(rep)+'<div class="nm">'+g[0]+'<span>'+gcount(g)+'</span></div></a>'}).join('')+'</div></section>'+
+  '<section class="sec"><div class="sec-h"><div class="tabs" id="tabs"><button data-act="tab" data-v="new" class="on">Новинки</button><button data-act="tab" data-v="hits">Популярне</button><button data-act="tab" data-v="sale">Зі знижкою</button></div><a class="link" href="#catalog" data-act="allcat">Дивитись усе</a></div><div class="grid" id="hgrid">'+tabItems().map(card).join('')+'</div></section>'+
+  '<section class="sec"><div class="band"><a href="#catalog" data-act="gocat" data-cats="17,20,21">'+ph(BY[537])+'<div class="ov"><div class="eyebrow" style="color:#d0d0d0">Образ</div><h3>Костюми</h3><span class="link">Дивитись</span></div></a><a href="#catalog" data-act="gocat" data-cats="16,19">'+ph(BY[399])+'<div class="ov"><div class="eyebrow" style="color:#d0d0d0">Крок</div><h3>Взуття</h3><span class="link">Дивитись</span></div></a></div></section>'+
+  '<div class="vals"><div><h4>Доставка</h4><p>Відправляємо по всій Україні. Строки та вартість залежать від перевізника.</p></div><div><h4>Оплата</h4><p>При отриманні або карткою онлайн.</p></div><div><h4>Розмір</h4><p>Не впевнені, що підійде? Напишіть нам, підберемо.</p></div></div></div>'+footer();
+}
+function viewProduct(id){
+  var p=BY[id];if(!p){return viewHome()}
+  selSize=p.s.length===1?p.s[0]:null;
+  var rel=P.filter(function(x){return x.c===p.c&&x.id!==p.id}).slice(0,4);
+  if(rel.length<4)rel=rel.concat(P.filter(function(x){return x.b===p.b&&x.c!==p.c&&x.id!==p.id}).slice(0,4-rel.length));
+  $root.innerHTML=header({name:'product'})+'<main class="wrap"><div class="crumbs"><a href="#home">Головна</a> / <a href="#catalog" data-act="gocat" data-cats="'+p.c+'">'+CATS[p.c]+'</a> / '+esc(p.b)+'</div>'+
+  '<div class="prod"><div>'+ph(p)+'</div><div class="pinfo"><div class="eyebrow">'+esc(p.b)+'</div><h1>'+esc(p.t)+'</h1><div class="eyebrow" style="letter-spacing:.1em">Арт. '+esc(p.a)+'</div><div class="price">'+(p.sale?'<b>'+money(p.ps)+'</b><s>'+money(p.pt)+'</s>':money(p.ps))+'</div>'+
+  '<div class="lbl">Колір <span>'+p.col.join(' / ')+'</span></div><div class="dots" style="margin:0">'+p.col.map(function(c){return '<i class="dot" style="width:22px;height:22px;background:'+COLS[c]+'"></i>'}).join('')+'</div>'+
+  '<div class="lbl">Розмір <span>'+(p.s[0]===ONE?'':'Доступні в наявності')+'</span></div><div class="sz" id="pz">'+p.s.slice().sort(szSort).map(function(s){return '<button data-act="pick" data-v="'+esc(s)+'" class="'+(selSize===s?'on':'')+'">'+esc(s)+'</button>'}).join('')+'</div><div class="err" id="err"></div>'+
+  '<div class="buy"><button class="btn solid" data-act="add" data-id="'+p.id+'">Додати в кошик</button><button class="fav'+(isFav(p.id)?' on':'')+'" data-fav="'+p.id+'" data-act="fav" aria-label="В обране">'+IC.heart+'</button></div>'+
+  '<div style="margin-top:34px"><details open><summary>Доставка і оплата</summary><p>Нова Пошта, Укрпошта або кур’єр. Оплата при отриманні чи карткою онлайн.</p></details><details><summary>Обмін і повернення</summary><p>Можна приміряти у відділенні. Умови обміну уточнюються при замовленні.</p></details><details><summary>Догляд</summary><p>Рекомендації з прання вказані на етикетці виробу.</p></details></div></div></div>'+
+  (rel.length?'<section class="sec"><div class="sec-h"><div><div class="eyebrow">Разом з цим</div><h2>Вам може сподобатись</h2></div></div><div class="grid">'+rel.map(card).join('')+'</div></section>':'')+'</main>'+footer();
+}
+var selSize=null;
+function viewFav(){
+  var items=favs.map(function(i){return BY[i]}).filter(Boolean);
+  $root.innerHTML=header({name:'favorites'})+'<main class="wrap"><div class="crumbs"><a href="#home">Головна</a> / Обране</div><div class="pg-h"><div><div class="eyebrow">Збережене</div><h1>Обране</h1></div><span class="eyebrow">'+items.length+' '+(items.length===1?'товар':'товарів')+'</span></div>'+
+  (items.length?'<div class="grid">'+items.map(card).join('')+'</div>':'<div class="empty"><h2>Тут поки порожньо</h2><p>Натискайте на серце біля товару, щоб зберегти його.</p><a class="btn solid" href="#catalog" data-act="allcat">До каталогу</a></div>')+'</main>'+footer();
+}
+function lineH(l,edit){
+  var p=BY[l.id];
+  return '<div class="li"><a href="#product-'+p.id+'">'+ph(p)+'</a><div><div class="eyebrow">'+esc(p.b)+'</div><a href="#product-'+p.id+'" class="nm">'+esc(p.t)+'</a><div class="meta">'+(l.s===ONE?'':'Розмір '+esc(l.s)+' · ')+'Арт. '+esc(p.a)+'</div>'+
+  (edit?'<div style="margin-top:14px"><div class="qty"><button data-act="dec" data-id="'+l.id+'" data-s="'+esc(l.s)+'" aria-label="Менше">−</button><span>'+l.qty+'</span><button data-act="inc" data-id="'+l.id+'" data-s="'+esc(l.s)+'" aria-label="Більше">+</button></div></div>':'<div class="meta">Кількість: '+l.qty+'</div>')+'</div>'+
+  '<div class="right"><span class="price">'+money(p.ps*l.qty)+'</span>'+(edit?'<button class="rm" data-act="rm" data-id="'+l.id+'" data-s="'+esc(l.s)+'">Видалити</button>':'')+'</div></div>'
+}
+function summaryH(btn){
+  var s=cartSum();
+  return '<aside class="sum"><h3>Ваше замовлення</h3><div class="row"><span class="m">Товари ('+cartCount()+')</span><span>'+money(s)+'</span></div><div class="row"><span class="m">Доставка</span><span>за тарифами перевізника</span></div><div class="row t"><span>Разом</span><span>'+money(s)+'</span></div>'+btn+'</aside>'
+}
+function viewCart(){
+  $root.innerHTML=header({name:'cart'})+'<main class="wrap"><div class="crumbs"><a href="#home">Головна</a> / Кошик</div><div class="pg-h"><div><div class="eyebrow">Покупки</div><h1>Кошик</h1></div></div>'+
+  (cart.length?'<div class="two"><div>'+cart.map(function(l){return lineH(l,true)}).join('')+'<div style="margin-top:22px"><a class="link" href="#catalog" data-act="keep">Продовжити покупки</a></div></div>'+summaryH('<a class="btn solid block" style="margin-top:20px" href="#checkout">Оформити замовлення</a>')+'</div>':'<div class="empty"><h2>Кошик порожній</h2><p>Додайте товари з каталогу, щоб оформити замовлення.</p><a class="btn solid" href="#catalog" data-act="allcat">До каталогу</a></div>')+'</main>'+footer();
+}
+function fld(id,label,type,ph2,extra){return '<div class="fld" id="w-'+id+'"><label for="'+id+'">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" placeholder="'+(ph2||'')+'" '+(extra||'')+'><div class="e"></div></div>'}
+function viewCheckout(){
+  if(!cart.length){location.hash='cart';return}
+  $root.innerHTML=header({name:'checkout'})+'<main class="wrap"><div class="crumbs"><a href="#home">Головна</a> / <a href="#cart">Кошик</a> / Оформлення</div><div class="pg-h"><div><div class="eyebrow">Останній крок</div><h1>Оформлення</h1></div></div>'+
+  '<div class="two"><form id="co" class="frm" novalidate><div class="h3s">Контакти</div><div class="g2">'+fld('fn','Ім’я та прізвище','text','Олександр Коваленко','autocomplete="name"')+fld('ph','Телефон','tel','+380 __ ___ __ __','autocomplete="tel"')+'</div>'+fld('em','Email (необов’язково)','email','name@mail.com','autocomplete="email"')+
+  '<div class="h3s">Доставка</div><label class="opt"><input type="radio" name="dl" value="np" checked><span>Нова Пошта, відділення<small>Забрати у вибраному відділенні</small></span></label><label class="opt"><input type="radio" name="dl" value="cr"><span>Нова Пошта, кур’єр<small>Доставка за вказаною адресою</small></span></label><label class="opt"><input type="radio" name="dl" value="up"><span>Укрпошта<small>Відділення зв’язку</small></span></label>'+
+  '<div class="g2">'+fld('ct','Місто','text','Київ','autocomplete="address-level2"')+fld('ad','Відділення або адреса','text','Відділення №12','autocomplete="street-address"')+'</div>'+
+  '<div class="h3s">Оплата</div><label class="opt"><input type="radio" name="pm" value="cod" checked><span>При отриманні<small>Готівкою або карткою у відділенні</small></span></label><label class="opt"><input type="radio" name="pm" value="card"><span>Карткою онлайн<small>Visa, Mastercard, Apple Pay, Google Pay</small></span></label>'+
+  '<div class="fld"><label for="cm">Коментар до замовлення</label><textarea id="cm" placeholder="Побажання щодо розміру чи доставки"></textarea></div></form>'+
+  summaryH(cart.map(function(l){return lineH(l,false)}).join('').replace(/class="li"/g,'class="li" style="grid-template-columns:64px minmax(0,1fr) auto;gap:12px;padding-block:12px"')+'<button class="btn solid block" style="margin-top:20px" data-act="place">Підтвердити замовлення</button><p style="color:var(--mut);font-size:12px;margin:12px 0 0">Це прототип: дані нікуди не надсилаються.</p>')+'</div></main>'+footer();
+}
+function viewDone(n){
+  $root.innerHTML=header({name:'done'})+'<main class="wrap"><div class="done"><div class="eyebrow">Замовлення №'+n+'</div><h1>Дякуємо!</h1><p>Ми отримали ваше замовлення та зв’яжемось для підтвердження.</p><a class="btn solid" style="margin-top:28px" href="#home">На головну</a></div></main>'+footer();
+}
+/* router */
+function route(){var h=location.hash.replace('#','')||'home';var m=h.match(/^product-(\d+)$/);if(m)return {name:'product',id:+m[1]};return {name:h}}
+function render(){
+  var r=route();
+  if(r.name==='catalog')viewCatalog();else if(r.name==='product')viewProduct(r.id);else if(r.name==='favorites')viewFav();else if(r.name==='cart')viewCart();else if(r.name==='checkout')viewCheckout();else viewHome();
+  syncHdr();
+}
+function go(name){if(location.hash==='#'+name)render();else location.hash=name}
+window.addEventListener('hashchange',function(){render();window.scrollTo(0,0)});
+document.addEventListener('error',function(e){if(e.target&&e.target.tagName==='IMG')e.target.classList.add('bad')},true);
+/* events */
+function remove(arr,v){var i=arr.indexOf(v);if(i>-1)arr.splice(i,1)}
+function toggleIn(arr,v){if(arr.indexOf(v)>-1)remove(arr,v);else arr.push(v)}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act],[data-f]');if(!b)return;
+  var f=b.getAttribute('data-f');
+  if(f){toggleIn(F[f],b.getAttribute('data-v'));F.page=1;updateCatalog();return}
+  var a=b.getAttribute('data-act');
+  if(a==='fav'){e.preventDefault();toggleFav(+b.getAttribute('data-fav'));return}
+  if(a==='menu'){document.getElementById('nav').classList.toggle('open');return}
+  if(a==='search'){var s=document.getElementById('sbar');s.hidden=!s.hidden;if(!s.hidden)document.getElementById('sq').focus();return}
+  if(a==='allcat'||a==='keep'){F=newF();go('catalog');return}
+  if(a==='sortnew'){F=newF();go('catalog');return}
+  if(a==='onsale'){F=newF();F.sale=true;F.sort='disc';go('catalog');return}
+  if(a==='gocat'){F=newF();F.cats=b.getAttribute('data-cats').split(',').map(Number);go('catalog');return}
+  if(a==='tab'){homeTab=b.getAttribute('data-v');document.querySelectorAll('#tabs button').forEach(function(x){x.classList.toggle('on',x===b)});document.getElementById('hgrid').innerHTML=tabItems().map(card).join('');return}
+  if(a==='unchip'){var k=b.getAttribute('data-k'),v=b.getAttribute('data-v');if(k==='price'){F.min=MINP;F.max=MAXP}else if(k==='sale')F.sale=false;else if(k==='q')F.q='';else if(k==='cats')remove(F.cats,+v);else remove(F[k],v);F.page=1;updateCatalog();return}
+  if(a==='reset'){F=newF();updateCatalog();return}
+  if(a==='more'){F.page++;updateCatalog();return}
+  if(a==='fopen'){document.getElementById('cl').classList.add('open');window.scrollTo(0,0);return}
+  if(a==='fclose'){document.getElementById('cl').classList.remove('open');return}
+  if(a==='pick'){selSize=b.getAttribute('data-v');document.querySelectorAll('#pz button').forEach(function(x){x.classList.toggle('on',x===b)});document.getElementById('err').textContent='';return}
+  if(a==='add'){if(!selSize){document.getElementById('err').textContent='Оберіть розмір';return}addCart(+b.getAttribute('data-id'),selSize);toast('Додано в кошик <a href="#cart">Відкрити кошик</a>');return}
+  if(a==='inc'||a==='dec'||a==='rm'){var id=+b.getAttribute('data-id'),sz=b.getAttribute('data-s');var l=cart.find(function(x){return x.id===id&&x.s===sz});if(l){if(a==='inc')l.qty++;else if(a==='dec')l.qty=Math.max(1,l.qty-1);else remove(cart,l);ss('bs_cart',cart);render()}return}
+  if(a==='place'){placeOrder();return}
+});
+function placeOrder(){
+  var ok=true;
+  [['fn',function(v){return v.trim().length>=3},'Вкажіть ім’я та прізвище'],['ph',function(v){return v.replace(/\D/g,'').length>=10},'Вкажіть коректний телефон'],['ct',function(v){return v.trim().length>=2},'Вкажіть місто'],['ad',function(v){return v.trim().length>=2},'Вкажіть відділення або адресу']].forEach(function(r){
+    var i=document.getElementById(r[0]),w=document.getElementById('w-'+r[0]);var good=r[1](i.value);w.classList.toggle('bad',!good);w.querySelector('.e').textContent=good?'':r[2];if(!good){if(ok)i.focus();ok=false}
+  });
+  if(!ok)return;
+  var n=String(Math.floor(100000+Math.random()*900000));cart=[];ss('bs_cart',cart);viewDone(n);syncHdr();window.scrollTo(0,0)
+}
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.getAttribute&&t.getAttribute('data-f')&&t.type==='checkbox'){var k=t.getAttribute('data-f');var v=k==='cats'?+t.value:t.value;toggleIn(F[k],v);F.page=1;updateCatalog();return}
+  if(t.id==='fsale'){F.sale=t.checked;F.page=1;updateCatalog();return}
+  if(t.id==='sort'){F.sort=t.value;F.page=1;updateCatalog();return}
+  if(t.id==='rmin'||t.id==='rmax'){F.page=1;updateCatalog()}
+});
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(t.id==='rmin'||t.id==='rmax'){
+    var lo=+document.getElementById('rmin').value,hi=+document.getElementById('rmax').value;
+    if(t.id==='rmin'&&lo>hi){lo=hi;t.value=lo}if(t.id==='rmax'&&hi<lo){hi=lo;t.value=hi}
+    F.min=lo;F.max=hi;document.getElementById('vmin').textContent=money(lo);document.getElementById('vmax').textContent=money(hi)
+  }
+});
+document.addEventListener('submit',function(e){
+  var f=e.target;e.preventDefault();
+  if(f.id==='sform'){F=newF();F.q=document.getElementById('sq').value.trim();go('catalog');return}
+  if(f.getAttribute('data-act')==='sub'){var i=document.getElementById('subm');if(i.value.indexOf('@')>0){toast('Дякуємо, ми повідомимо про новинки');i.value=''}else{i.focus()}}
+});
+render();
+})();
+</script>
+
+</body></html>
