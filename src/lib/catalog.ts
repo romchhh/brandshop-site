@@ -10,7 +10,8 @@ export const CATEGORIES: Record<number, string> = {
   29: "Футболки",
   30: "Поло",
   16: "Взуття весна/осінь",
-  19: "Взуття літо",
+  18: "Взуття зима",
+  19: "Тапки",
   22: "Сумки",
   31: "Шорти джинсові",
   32: "Шорти текстильні",
@@ -27,24 +28,76 @@ export const CATEGORIES: Record<number, string> = {
   28: "Жилетки",
 };
 
-export const CATEGORY_GROUPS: {
+export type CategoryGroup = {
+  id: string;
   name: string;
   categoryIds: number[];
   repId: number;
-}[] = [
-  { name: "Джинси", categoryIds: [1], repId: 2053 },
-  { name: "Футболки", categoryIds: [29, 30], repId: 2399 },
-  { name: "Кофти та худі", categoryIds: [26], repId: 2219 },
-  { name: "Куртки", categoryIds: [27], repId: 716 },
-  { name: "Жилетки", categoryIds: [28], repId: 2359 },
-  { name: "Штани", categoryIds: [7], repId: 2372 },
-  { name: "Шорти", categoryIds: [31, 32, 33], repId: 2432 },
-  { name: "Костюми", categoryIds: [17, 20, 21], repId: 537 },
-  { name: "Взуття", categoryIds: [16, 19], repId: 389 },
-  { name: "Сумки", categoryIds: [22], repId: 2454 },
-  { name: "Шапки", categoryIds: [25], repId: 1618 },
-  { name: "Білизна та шкарпетки", categoryIds: [10, 15], repId: 1266 },
+};
+
+/**
+ * Default showcase / novinki group order.
+ * Footwear is split into 3 feed categories:
+ *   18 зима · 16 весна/осінь · 19 тапки (шльопанці / літо)
+ * Order can be overridden in admin (`data/admin-settings.json`).
+ */
+export const CATEGORY_GROUPS: CategoryGroup[] = [
+  { id: "jackets", name: "Куртки", categoryIds: [27], repId: 716 },
+  { id: "hoodies", name: "Кофти та худі", categoryIds: [26], repId: 2219 },
+  { id: "jeans", name: "Джинси", categoryIds: [1], repId: 2053 },
+  { id: "shoes-winter", name: "Взуття зима", categoryIds: [18], repId: 490 },
+  { id: "bags", name: "Сумки", categoryIds: [22], repId: 2454 },
+  { id: "shoes-spring", name: "Взуття весна/осінь", categoryIds: [16], repId: 389 },
+  { id: "slippers", name: "Тапки", categoryIds: [19], repId: 2244 },
+  { id: "tees", name: "Футболки", categoryIds: [29, 30], repId: 2399 },
+  { id: "vests", name: "Жилетки", categoryIds: [28], repId: 2359 },
+  { id: "suits", name: "Костюми", categoryIds: [17, 20, 21], repId: 537 },
+  { id: "pants", name: "Штани", categoryIds: [7, 6], repId: 2372 },
+  { id: "shorts", name: "Шорти", categoryIds: [31, 32, 33], repId: 2432 },
+  { id: "shirts", name: "Сорочки", categoryIds: [9], repId: 2410 },
+  { id: "hats", name: "Шапки та кепки", categoryIds: [25, 24], repId: 1618 },
+  { id: "belts", name: "Ремені", categoryIds: [13], repId: 2549 },
+  { id: "wallets", name: "Гаманці", categoryIds: [23], repId: 1689 },
+  { id: "underwear", name: "Білизна та шкарпетки", categoryIds: [10, 15], repId: 1266 },
+  { id: "glasses", name: "Окуляри", categoryIds: [34], repId: 1863 },
 ];
+
+/** Display names that win over feed titles (e.g. «Взуття літо» → «Тапки»). */
+export const CATEGORY_LABEL_OVERRIDES: Record<number, string> = {
+  19: "Тапки",
+  16: "Взуття весна/осінь",
+  18: "Взуття зима",
+};
+
+export function orderCategoryGroups(
+  orderIds?: string[] | null,
+): CategoryGroup[] {
+  if (!orderIds?.length) return CATEGORY_GROUPS;
+  const byId = new Map(CATEGORY_GROUPS.map((g) => [g.id, g]));
+  const ordered: CategoryGroup[] = [];
+  const seen = new Set<string>();
+  for (const id of orderIds) {
+    const g = byId.get(id);
+    if (!g || seen.has(id)) continue;
+    ordered.push(g);
+    seen.add(id);
+  }
+  for (const g of CATEGORY_GROUPS) {
+    if (!seen.has(g.id)) ordered.push(g);
+  }
+  return ordered;
+}
+
+/** categoryId → rank (lower = earlier in novinki / rails). */
+export function categoryRankMap(groups: CategoryGroup[]): Map<number, number> {
+  const map = new Map<number, number>();
+  groups.forEach((g, gi) => {
+    for (const cid of g.categoryIds) {
+      if (!map.has(cid)) map.set(cid, gi);
+    }
+  });
+  return map;
+}
 
 const BRAND_RULES: { name: string; re: RegExp }[] = [
   { name: "Stone Island", re: /stone island/i },
@@ -319,9 +372,29 @@ export function matchProduct(
   return true;
 }
 
-export function sortProducts(list: Product[], sort: CatalogFilters["sort"]) {
+export function sortByGroupThenId(
+  list: Product[],
+  rank: Map<number, number>,
+): Product[] {
+  const fallback = rank.size;
+  return [...list].sort((a, b) => {
+    const ra = rank.get(a.categoryId) ?? fallback;
+    const rb = rank.get(b.categoryId) ?? fallback;
+    if (ra !== rb) return ra - rb;
+    return b.id - a.id;
+  });
+}
+
+export function sortProducts(
+  list: Product[],
+  sort: CatalogFilters["sort"],
+  rank?: Map<number, number>,
+) {
   const a = [...list];
-  if (sort === "new") a.sort((x, y) => y.id - x.id);
+  if (sort === "new") {
+    if (rank?.size) return sortByGroupThenId(a, rank);
+    a.sort((x, y) => y.id - x.id);
+  }
   if (sort === "asc") a.sort((x, y) => x.priceSite - y.priceSite);
   if (sort === "desc") a.sort((x, y) => y.priceSite - x.priceSite);
   if (sort === "disc")
@@ -333,27 +406,46 @@ export function sortProducts(list: Product[], sort: CatalogFilters["sort"]) {
   return a;
 }
 
-/** Як у give-me HomeFeed: новинки = найновіші за id. */
-export function homeNewItems(products: Product[], limit = 4): Product[] {
-  return [...products].sort((a, b) => b.id - a.id).slice(0, limit);
+/** Новинки: пріоритет груп (адмінка), всередині групи — новіші id. */
+export function homeNewItems(
+  products: Product[],
+  limit = 4,
+  rank?: Map<number, number>,
+): Product[] {
+  const sorted = rank?.size
+    ? sortByGroupThenId(products, rank)
+    : [...products].sort((a, b) => b.id - a.id);
+  return sorted.slice(0, limit);
 }
 
 /**
  * Акційні пропозиції: товари зі знижкою, без аксесуарів
  * (як promotional_products у give-me).
  */
-export function homeSaleItems(products: Product[], limit = 4): Product[] {
-  return products
-    .filter(
-      (p) => p.sale && !PROMO_EXCLUDED_CATEGORY_IDS.has(p.categoryId),
-    )
-    .sort((a, b) => b.id - a.id)
-    .slice(0, limit);
+export function homeSaleItems(
+  products: Product[],
+  limit = 4,
+  rank?: Map<number, number>,
+): Product[] {
+  const filtered = products.filter(
+    (p) => p.sale && !PROMO_EXCLUDED_CATEGORY_IDS.has(p.categoryId),
+  );
+  const sorted = rank?.size
+    ? sortByGroupThenId(filtered, rank)
+    : filtered.sort((a, b) => b.id - a.id);
+  return sorted.slice(0, limit);
 }
 
 /** Стрічка «Всі товари» на головній. */
-export function homeAllItems(products: Product[], limit = 12): Product[] {
-  return [...products].sort((a, b) => b.id - a.id).slice(0, limit);
+export function homeAllItems(
+  products: Product[],
+  limit = 12,
+  rank?: Map<number, number>,
+): Product[] {
+  const sorted = rank?.size
+    ? sortByGroupThenId(products, rank)
+    : [...products].sort((a, b) => b.id - a.id);
+  return sorted.slice(0, limit);
 }
 
 /** @deprecated give-me не має «хітів» — alias на новинки. */
@@ -362,16 +454,24 @@ export function homeHits(products: Product[]): Product[] {
 }
 
 /** Повний список акцій для /promotional-offers */
-export function promotionalProducts(products: Product[]): Product[] {
-  return products
-    .filter(
-      (p) => p.sale && !PROMO_EXCLUDED_CATEGORY_IDS.has(p.categoryId),
-    )
-    .sort((a, b) => b.id - a.id);
+export function promotionalProducts(
+  products: Product[],
+  rank?: Map<number, number>,
+): Product[] {
+  const filtered = products.filter(
+    (p) => p.sale && !PROMO_EXCLUDED_CATEGORY_IDS.has(p.categoryId),
+  );
+  return rank?.size
+    ? sortByGroupThenId(filtered, rank)
+    : filtered.sort((a, b) => b.id - a.id);
 }
 
 export function mergeCategories(
   feedCategories: Record<number, string>,
 ): Record<number, string> {
-  return { ...CATEGORIES, ...feedCategories };
+  return {
+    ...CATEGORIES,
+    ...feedCategories,
+    ...CATEGORY_LABEL_OVERRIDES,
+  };
 }

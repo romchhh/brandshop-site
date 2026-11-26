@@ -18,4 +18,7 @@ export type CatalogPublic = {
   brands: string[];
   minPrice: number;
   maxPrice: number;
+  /** Category group ids order for novinki / rails. */
+  groupOrder: string[];
+  hiddenProductIds: number[];
 };

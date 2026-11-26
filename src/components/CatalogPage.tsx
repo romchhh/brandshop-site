@@ -4,7 +4,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  CATEGORY_GROUPS,
   defaultFilters,
   matchProduct,
   sortProducts,
@@ -64,7 +63,8 @@ function FilterIcon({ className = "h-4 w-4" }: { className?: string }) {
 export function CatalogPage() {
   const searchParams = useSearchParams();
   const queryKey = searchParams.toString();
-  const { products, categories, minPrice, maxPrice } = useCatalog();
+  const { products, categories, minPrice, maxPrice, categoryGroups, categoryRank } =
+    useCatalog();
   const { filters, setFilters, resetFilters } = useShop();
   const [page, setPage] = useState(() => {
     const saved = readCatalogView();
@@ -99,8 +99,9 @@ export function CatalogPage() {
       sortProducts(
         products.filter((p) => matchProduct(p, filters, undefined, categories)),
         filters.sort,
+        categoryRank,
       ),
-    [filters, products, categories],
+    [filters, products, categories, categoryRank],
   );
 
   const shown = list.slice(0, page * PER);
@@ -165,7 +166,7 @@ export function CatalogPage() {
 
   const categoryTitle = (() => {
     if (!filters.categories.length) return null;
-    const group = CATEGORY_GROUPS.find(
+    const group = categoryGroups.find(
       (g) =>
         g.categoryIds.length === filters.categories.length &&
         g.categoryIds.every((id) => filters.categories.includes(id)),

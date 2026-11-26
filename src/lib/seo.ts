@@ -84,6 +84,8 @@ export function organizationJsonLd() {
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer service",
+      telephone: "+380663581645",
+      areaServed: "UA",
       url: SITE.telegram,
       availableLanguage: ["Ukrainian", "Russian"],
     },

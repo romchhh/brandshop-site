@@ -76,3 +76,24 @@ export function IconX({ className }: { className?: string }) {
     </svg>
   );
 }
+
+export function IconTelegram({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <path
+        d="M20.5 4.5 3.8 11.2c-.9.35-.9 1.55.05 1.85l4.05 1.2 1.55 4.75c.3.95 1.5 1.15 2.1.35l2.2-2.85 4.35 3.2c.85.6 2.05.15 2.25-.9L21.7 5.7c.2-1.05-.85-1.85-1.2-1.2z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 14.2 17.2 7.8"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

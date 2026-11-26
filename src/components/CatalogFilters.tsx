@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  CATEGORY_GROUPS,
   COLOR_SWATCH,
   matchProduct,
   sortSizes,
@@ -264,7 +263,8 @@ export function CatalogSidebar({
   variant?: "sidebar" | "mobile";
 }) {
   const router = useRouter();
-  const { products, categories, minPrice, maxPrice } = useCatalog();
+  const { products, categories, minPrice, maxPrice, categoryGroups } =
+    useCatalog();
   const { filters, setFilters, resetFilters } = useShop();
   const [openCategories, setOpenCategories] = useState(true);
   const [openPrice, setOpenPrice] = useState(true);
@@ -295,7 +295,7 @@ export function CatalogSidebar({
   );
 
   const groups = useMemo(() => {
-    return CATEGORY_GROUPS.map((g) => {
+    return categoryGroups.map((g) => {
       const liveIds = g.categoryIds.filter((id) =>
         productCountByCat.has(id),
       );
@@ -305,15 +305,15 @@ export function CatalogSidebar({
       );
       return { ...g, liveIds, count };
     }).filter((g) => g.count > 0);
-  }, [productCountByCat]);
+  }, [productCountByCat, categoryGroups]);
 
   const orphanCats = useMemo(() => {
-    const grouped = new Set(CATEGORY_GROUPS.flatMap((g) => g.categoryIds));
+    const grouped = new Set(categoryGroups.flatMap((g) => g.categoryIds));
     return Object.keys(categories)
       .map(Number)
       .filter((id) => !grouped.has(id) && productCountByCat.has(id))
       .sort((a, b) => categories[a].localeCompare(categories[b], "uk"));
-  }, [categories, productCountByCat]);
+  }, [categories, productCountByCat, categoryGroups]);
 
   const sizes = sortSizes([
     ...new Set(
@@ -738,11 +738,12 @@ export function CatalogSidebar({
 
 export function ActiveFilterChips() {
   const router = useRouter();
-  const { products, categories, minPrice, maxPrice } = useCatalog();
+  const { products, categories, minPrice, maxPrice, categoryGroups } =
+    useCatalog();
   const { filters, setFilters, resetFilters } = useShop();
   const chips: { key: string; value: string; label: string }[] = [];
 
-  const matchedGroup = CATEGORY_GROUPS.find((g) => {
+  const matchedGroup = categoryGroups.find((g) => {
     const liveIds = g.categoryIds.filter((id) =>
       products.some((p) => p.categoryId === id),
     );

@@ -2,12 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Montserrat } from "next/font/google";
 import { CatalogProvider } from "@/components/CatalogProvider";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
 import { ScrollRestoration } from "@/components/ScrollRestoration";
 import { ShopProvider } from "@/components/ShopProvider";
-import { Toast } from "@/components/Toast";
+import { StoreChrome } from "@/components/StoreChrome";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_KEYWORDS,
@@ -43,6 +41,10 @@ export const metadata: Metadata = {
   creator: SITE.brandFull,
   publisher: SITE.brandFull,
   category: "shopping",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
+  },
   formatDetection: {
     telephone: false,
     email: false,
@@ -102,10 +104,7 @@ export default function RootLayout({
             <Suspense fallback={null}>
               <ScrollRestoration />
             </Suspense>
-            <Header />
-            <main>{children}</main>
-            <Footer />
-            <Toast />
+            <StoreChrome>{children}</StoreChrome>
           </ShopProvider>
         </CatalogProvider>
       </body>

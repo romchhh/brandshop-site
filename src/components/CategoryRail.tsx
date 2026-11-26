@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CATEGORY_GROUPS, type Product } from "@/lib/catalog";
+import type { Product } from "@/lib/catalog";
+import { useCatalog } from "./CatalogProvider";
 import { CategoryShowcaseCard } from "./CategoryShowcaseCard";
 
 type GroupItem = {
@@ -17,20 +18,21 @@ export function CategoryRail({
   productsById: Record<number, Product>;
   products: Product[];
 }) {
+  const { categoryGroups } = useCatalog();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
 
   const items: GroupItem[] = useMemo(
     () =>
-      CATEGORY_GROUPS.map((g) => {
+      categoryGroups.map((g) => {
         const rep =
           productsById[g.repId] ||
           products.find((p) => g.categoryIds.includes(p.categoryId)) ||
           null;
         return { name: g.name, categoryIds: g.categoryIds, rep };
       }),
-    [products, productsById],
+    [products, productsById, categoryGroups],
   );
 
   const mid = Math.ceil(items.length / 2);

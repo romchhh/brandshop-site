@@ -7,8 +7,8 @@ import { ProductCard } from "./ProductCard";
 import { Button, Container, PageTitle } from "./ui";
 
 export function PromotionalOffersPage() {
-  const { products, ready } = useCatalog();
-  const list = promotionalProducts(products);
+  const { products, ready, categoryRank } = useCatalog();
+  const list = promotionalProducts(products, categoryRank);
 
   return (
     <Container className="pb-24 pt-6 md:pt-10">

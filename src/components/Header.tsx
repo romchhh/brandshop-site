@@ -5,10 +5,17 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { defaultFilters } from "@/lib/catalog";
+import { SITE } from "@/lib/site";
 import { useCatalog } from "./CatalogProvider";
 import { useShop } from "./ShopProvider";
 import { Container } from "./ui";
-import { IconBag, IconHeart, IconMenu, IconSearch } from "./icons";
+import {
+  IconBag,
+  IconHeart,
+  IconMenu,
+  IconSearch,
+  IconTelegram,
+} from "./icons";
 
 const SearchSidebar = dynamic(
   () =>
@@ -71,7 +78,7 @@ export function Header() {
 
       <header className="sticky top-0 z-50 border-b border-line bg-white/95 backdrop-blur-md">
         <Container className="px-3 sm:px-10 lg:px-14">
-          <div className="grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1 sm:h-[4.5rem] sm:gap-3 md:h-[5.75rem] md:grid-cols-[1fr_auto_1fr] md:gap-5">
+          <div className="relative grid h-16 grid-cols-[1fr_auto_1fr] items-center gap-2 sm:h-[4.5rem] sm:gap-3 md:h-[5.75rem] md:gap-5">
             <div className="flex min-w-0 items-center justify-start">
               <nav className="hidden items-center gap-5 lg:gap-8 xl:gap-10 md:flex">
                 {NAV.map((item) => (
@@ -99,16 +106,36 @@ export function Header() {
               >
                 <IconMenu className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
+              <a
+                href={SITE.telegram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${iconBtn} md:hidden`}
+                aria-label={`Telegram ${SITE.telegramLabel}`}
+                title="Написати в Telegram"
+              >
+                <IconTelegram className="h-6 w-6 sm:h-7 sm:w-7" />
+              </a>
             </div>
 
             <Link
               href="/"
-              className="min-w-0 truncate text-center text-[0.95rem] font-semibold uppercase tracking-[0.12em] text-ink sm:text-[1.1rem] sm:tracking-brand md:text-[1.25rem]"
+              className="min-w-0 max-w-[52vw] truncate text-center text-[0.95rem] font-semibold uppercase tracking-[0.12em] text-ink sm:max-w-none sm:text-[1.1rem] sm:tracking-brand md:text-[1.25rem]"
             >
               BrandShop
             </Link>
 
             <div className="flex shrink-0 items-center justify-end gap-0">
+              <a
+                href={SITE.telegram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${iconBtn} max-md:hidden`}
+                aria-label={`Telegram ${SITE.telegramLabel}`}
+                title="Написати в Telegram"
+              >
+                <IconTelegram className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+              </a>
               <button
                 type="button"
                 className={iconBtn}
@@ -153,6 +180,16 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
+            <a
+              href={SITE.telegram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 border-b border-line py-4 text-[0.8125rem] font-medium uppercase tracking-caps text-sale"
+              onClick={() => setMenuOpen(false)}
+            >
+              <IconTelegram className="h-6 w-6" />
+              Telegram {SITE.telegramLabel}
+            </a>
           </nav>
         )}
       </header>

@@ -4,10 +4,17 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
-import { indexById, type Product } from "@/lib/catalog";
+import {
+  categoryRankMap,
+  indexById,
+  orderCategoryGroups,
+  type CategoryGroup,
+  type Product,
+} from "@/lib/catalog";
 import type { CatalogPublic } from "@/lib/feed/types";
 
 type CatalogContextValue = {
@@ -20,11 +27,14 @@ type CatalogContextValue = {
   syncedAt: string | null;
   productCount: number;
   ready: boolean;
+  groupOrder: string[];
+  categoryGroups: CategoryGroup[];
+  categoryRank: Map<number, number>;
 };
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
 
-const CACHE_KEY = "bs_catalog_v2";
+const CACHE_KEY = "bs_catalog_v3";
 
 const emptyValue: CatalogContextValue = {
   products: [],
@@ -36,9 +46,13 @@ const emptyValue: CatalogContextValue = {
   syncedAt: null,
   productCount: 0,
   ready: false,
+  groupOrder: [],
+  categoryGroups: orderCategoryGroups(),
+  categoryRank: categoryRankMap(orderCategoryGroups()),
 };
 
 function fromPublic(data: CatalogPublic): CatalogContextValue {
+  const groups = orderCategoryGroups(data.groupOrder);
   return {
     products: data.products,
     productsById: indexById(data.products),
@@ -49,6 +63,9 @@ function fromPublic(data: CatalogPublic): CatalogContextValue {
     syncedAt: data.syncedAt,
     productCount: data.productCount,
     ready: true,
+    groupOrder: data.groupOrder ?? groups.map((g) => g.id),
+    categoryGroups: groups,
+    categoryRank: categoryRankMap(groups),
   };
 }
 
@@ -94,7 +111,6 @@ export function CatalogProvider({
   useEffect(() => {
     let cancelled = false;
 
-    // Already hydrated from SSR — do not refetch (saves ~400KB + CPU).
     if (initial?.products?.length) return;
 
     const cached = readSessionCache();
@@ -122,8 +138,10 @@ export function CatalogProvider({
     };
   }, [initial]);
 
+  const memo = useMemo(() => value, [value]);
+
   return (
-    <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>
+    <CatalogContext.Provider value={memo}>{children}</CatalogContext.Provider>
   );
 }
 

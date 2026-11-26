@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { saveOrder } from "@/lib/admin/orders-store";
 import type { LastOrder } from "@/lib/order";
 import { sendOrderToTelegram } from "@/lib/telegram";
 
@@ -41,6 +42,12 @@ export async function POST(req: NextRequest) {
       { ok: false, error: tg.error ?? "Не вдалося надіслати в Telegram" },
       { status: 502 },
     );
+  }
+
+  try {
+    await saveOrder(body);
+  } catch (err) {
+    console.error("[orders] persist failed:", err);
   }
 
   return NextResponse.json({ ok: true, number: body.number });

@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { BUYER_LINKS, SHOP_LINKS, SITE } from "@/lib/site";
+import { BUYER_LINKS, SHOP_LINKS, SITE, STORES } from "@/lib/site";
 import { Container } from "./ui";
 
 export function Footer() {
   return (
-    <footer className="mt-12 border-t border-line bg-white pt-10 pb-8 md:mt-16 md:pt-16 md:pb-10">
+    <footer className="border-t border-line bg-white pt-10 pb-8 md:pt-16 md:pb-10">
       <Container>
         <div className="flex flex-col gap-8 md:gap-12 lg:grid lg:grid-cols-4 lg:gap-10">
           <div className="text-center md:text-left lg:col-span-1">
@@ -50,27 +50,49 @@ export function Footer() {
 
           <div className="text-center md:text-left md:col-span-2 lg:col-span-1">
             <h4 className="mb-3.5 text-[0.7rem] font-semibold uppercase tracking-caps text-mute md:mb-6 md:text-[0.75rem]">
-              Telegram
+              Контакти
             </h4>
+            <a
+              href={SITE.phoneHref}
+              className="block text-[1.05rem] font-semibold text-ink hover:text-sale md:text-[1.125rem]"
+            >
+              {SITE.phoneDisplay}
+            </a>
+            <p className="mt-1 text-[0.875rem] text-mute">{SITE.city}</p>
             <a
               href={SITE.telegram}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-sale hover:underline md:text-[1.0625rem]"
+              className="mt-3 inline-flex text-[0.9375rem] font-semibold text-sale hover:underline md:text-[1.0625rem]"
             >
-              {SITE.telegramLabel}
+              Telegram {SITE.telegramLabel}
             </a>
-            <p className="mt-2 text-[0.8125rem] leading-relaxed text-mute md:text-[0.875rem]">
-              Новинки, акції та відповіді в чаті
-            </p>
+            <ul className="mt-4 space-y-1.5 text-[0.8125rem] leading-relaxed text-mute md:text-[0.875rem]">
+              {STORES.map((store) => (
+                <li key={store.id}>
+                  {store.city}, {store.address}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col gap-2 border-t border-line pt-5 text-center text-[0.8125rem] text-mute md:mt-14 md:flex-row md:items-center md:justify-between md:pt-6 md:text-left md:text-[0.9rem]">
+        <div className="mt-8 flex flex-col gap-2 border-t border-line pt-5 text-center text-[0.8125rem] text-mute md:mt-14 md:flex-row md:items-center md:justify-between md:gap-4 md:pt-6 md:text-left md:text-[0.9rem]">
           <span>© 2026 {SITE.brandFull}</span>
           <a href={SITE.domain} className="hover:text-sale">
             {SITE.host}
           </a>
+          <p className="md:ml-auto">
+            Розробка{" "}
+            <a
+              href="https://telebots.site/uk"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-ink hover:text-sale"
+            >
+              TeleBots
+            </a>
+          </p>
         </div>
       </Container>
     </footer>

@@ -1,9 +1,12 @@
 import {
   brandsInCatalog,
+  CATEGORY_GROUPS,
   priceBounds,
   slimProducts,
   type Product,
 } from "@/lib/catalog";
+import type { AdminSettings } from "@/lib/admin/settings";
+import { readAdminSettings } from "@/lib/admin/settings";
 import { SYNC_INTERVAL_MS } from "./config";
 import { sanitizeStoredSizes } from "./sizes";
 import {
@@ -68,26 +71,45 @@ function invalidatePublic() {
   s.publicKey = null;
 }
 
-export function toPublic(snapshot: CatalogSnapshot): CatalogPublic {
+export function toPublic(
+  snapshot: CatalogSnapshot,
+  settings?: Pick<AdminSettings, "groupOrder" | "hiddenProductIds" | "updatedAt">,
+): CatalogPublic {
   const s = state();
-  const key = `${snapshot.syncedAt}:${snapshot.productCount}`;
+  const settingsKey = settings
+    ? `${settings.updatedAt}:${settings.hiddenProductIds.length}:${settings.groupOrder.join(",")}`
+    : "default";
+  const key = `${snapshot.syncedAt}:${snapshot.productCount}:${settingsKey}`;
   if (s.publicView && s.publicKey === key) return s.publicView;
 
-  const products = slimProducts(withCleanSizes(snapshot.products));
+  const hidden = new Set(settings?.hiddenProductIds ?? []);
+  let products = slimProducts(withCleanSizes(snapshot.products));
+  if (hidden.size) {
+    products = products.filter((p) => !hidden.has(p.id));
+  }
   const { min, max } = priceBounds(products);
   const view: CatalogPublic = {
     syncedAt: snapshot.syncedAt,
     feedGeneratedAt: snapshot.feedGeneratedAt,
-    productCount: snapshot.productCount,
+    productCount: products.length,
     categories: snapshot.categories,
     products,
     brands: brandsInCatalog(products),
     minPrice: min,
     maxPrice: max,
+    groupOrder: settings?.groupOrder?.length
+      ? settings.groupOrder
+      : CATEGORY_GROUPS.map((g) => g.id),
+    hiddenProductIds: settings?.hiddenProductIds ?? [],
   };
   s.publicView = view;
   s.publicKey = key;
   return view;
+}
+
+/** Call after admin settings change so storefront sees new order/hidden. */
+export function invalidateCatalogPublic() {
+  invalidatePublic();
 }
 
 async function loadDiskOnce() {
@@ -174,7 +196,20 @@ export async function getCatalogSnapshot(options?: {
 export async function getCatalogPublic(options?: {
   force?: boolean;
 }): Promise<CatalogPublic> {
-  return toPublic(await getCatalogSnapshot(options));
+  const [snapshot, settings] = await Promise.all([
+    getCatalogSnapshot(options),
+    readAdminSettings().catch(() => null),
+  ]);
+  return toPublic(
+    snapshot,
+    settings
+      ? {
+          groupOrder: settings.groupOrder,
+          hiddenProductIds: settings.hiddenProductIds,
+          updatedAt: settings.updatedAt,
+        }
+      : undefined,
+  );
 }
 
 export function getMemorySnapshot(): CatalogSnapshot | null {

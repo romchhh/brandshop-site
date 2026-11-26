@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { InfoPage } from "@/components/InfoPage";
+import { InfoCard, InfoNote, InfoPage } from "@/components/InfoPage";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -11,21 +11,26 @@ export const metadata: Metadata = pageMetadata({
 
 export default function PaymentPage() {
   return (
-    <InfoPage title="Оплата">
-      <h2 className="text-lg font-semibold text-ink">
-        Є декілька способів оплатити замовлення:
-      </h2>
-      <ol className="list-decimal space-y-2 pl-5 text-mute">
-        <li className="text-ink">Повна оплата на карту.</li>
-        <li className="text-ink">
-          Післяплата Нової Пошти (накладний платіж) — за передоплатою на карту.
-        </li>
-        <li className="text-ink">Сейф-сервіс Нової Пошти.</li>
-        <li className="text-ink">Оплата криптовалютою.</li>
-      </ol>
-      <p className="pt-2 text-mute">
-        Реквізити для оплати надішле менеджер після підтвердження замовлення.
-      </p>
+    <InfoPage
+      title="Оплата"
+      lead="Оберіть зручний спосіб — реквізити надішле менеджер після підтвердження замовлення."
+    >
+      <InfoCard index={1} title="Повна оплата на карту">
+        Переказ на картку після узгодження замовлення з менеджером.
+      </InfoCard>
+      <InfoCard index={2} title="Накладений платіж Нової Пошти">
+        Післяплата у відділенні — за невеликою передоплатою на карту.
+      </InfoCard>
+      <InfoCard index={3} title="Сейф-сервіс Нової Пошти">
+        Безпечна оплата через сервіс Нової Пошти.
+      </InfoCard>
+      <InfoCard index={4} title="Криптовалюта">
+        Оплата в криптовалюті за домовленістю з менеджером.
+      </InfoCard>
+      <InfoNote>
+        Реквізити та деталі оплати надсилаємо в Telegram або SMS після
+        підтвердження замовлення.
+      </InfoNote>
     </InfoPage>
   );
 }
