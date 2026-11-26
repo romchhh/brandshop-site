@@ -4,9 +4,19 @@ import { Montserrat } from "next/font/google";
 import { CatalogProvider } from "@/components/CatalogProvider";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { JsonLd } from "@/components/JsonLd";
 import { ScrollRestoration } from "@/components/ScrollRestoration";
 import { ShopProvider } from "@/components/ShopProvider";
 import { Toast } from "@/components/Toast";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_KEYWORDS,
+  SITE_NAME,
+  SITE_URL,
+  organizationJsonLd,
+  websiteJsonLd,
+} from "@/lib/seo";
+import { SITE } from "@/lib/site";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -21,20 +31,60 @@ const montserrat = Montserrat({
 export const revalidate = 300;
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "BrandShop",
-    template: "%s · BrandShop",
+    default: `${SITE_NAME} — чоловічий одяг, взуття та аксесуари`,
+    template: `%s · ${SITE_NAME}`,
   },
-  description: "Чоловічий одяг, взуття та аксесуари",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://brandshop.in.ua",
-  ),
+  description: DEFAULT_DESCRIPTION,
+  keywords: DEFAULT_KEYWORDS,
+  applicationName: SITE_NAME,
+  authors: [{ name: SITE.brandFull, url: SITE_URL }],
+  creator: SITE.brandFull,
+  publisher: SITE.brandFull,
+  category: "shopping",
+  formatDetection: {
+    telephone: false,
+    email: false,
+    address: false,
+  },
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "uk_UA",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — чоловічий одяг, взуття та аксесуари`,
+    description: DEFAULT_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary",
+    title: `${SITE_NAME} — чоловічий одяг, взуття та аксесуари`,
+    description: DEFAULT_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  other: {
+    "geo.region": "UA",
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: "#8c2f39",
   width: "device-width",
   initialScale: 1,
+  colorScheme: "light",
 };
 
 export default function RootLayout({
@@ -45,6 +95,8 @@ export default function RootLayout({
   return (
     <html lang="uk" className={montserrat.variable}>
       <body className={`${montserrat.className} min-h-screen bg-white`}>
+        <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={websiteJsonLd()} />
         <CatalogProvider>
           <ShopProvider>
             <Suspense fallback={null}>

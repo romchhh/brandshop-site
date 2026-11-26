@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/InfoPage";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Доставка",
-};
+  path: "/delivery",
+  description:
+    "Доставка BrandShop Новою Поштою: відділення, кур’єр, поштомат. Самовивіз у Києві.",
+});
 
 export default function DeliveryPage() {
   return (

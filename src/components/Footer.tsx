@@ -68,13 +68,8 @@ export function Footer() {
 
         <div className="mt-8 flex flex-col gap-2 border-t border-line pt-5 text-center text-[0.8125rem] text-mute md:mt-14 md:flex-row md:items-center md:justify-between md:pt-6 md:text-left md:text-[0.9rem]">
           <span>© 2026 {SITE.brandFull}</span>
-          <a
-            href={SITE.domain}
-            className="hover:text-sale"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            brandshop.in.ua
+          <a href={SITE.domain} className="hover:text-sale">
+            {SITE.host}
           </a>
         </div>
       </Container>

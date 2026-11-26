@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { InfoPage } from "@/components/InfoPage";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Оплата",
-};
+  path: "/payment",
+  description:
+    "Способи оплати в BrandShop: на карту, накладений платіж Нової Пошти, сейф-сервіс та криптовалюта.",
+});
 
 export default function PaymentPage() {
   return (

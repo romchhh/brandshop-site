@@ -1,9 +1,13 @@
-/** Контакти та сервісні посилання BrandShop (як у give-me-project). */
+/** Контакти та сервісні посилання BrandShop. */
 
 export const SITE = {
   brand: "BrandShop",
   brandFull: "BRANDSHOP777",
-  domain: "https://brandshop.in.ua",
+  /** Public storefront URL */
+  domain: "https://site.brandshop.in.ua",
+  host: "site.brandshop.in.ua",
+  /** Media / legacy shop */
+  mediaHost: "brandshop.in.ua",
   telegram: "https://t.me/brandshop777",
   telegramLabel: "@brandshop777",
 } as const;
