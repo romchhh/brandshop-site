@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  homeHits,
+  homeAllItems,
   homeNewItems,
   homeSaleItems,
   defaultFilters,
@@ -16,20 +15,43 @@ import { CategoryRail } from "./CategoryRail";
 import { HomePillLink } from "./HomePillLink";
 import { Button, Container, SectionTitle, TextLink } from "./ui";
 
-type Tab = "new" | "hits" | "sale";
+function ProductSection({
+  title,
+  items,
+  moreHref,
+  moreLabel = "Показати ще",
+}: {
+  title: string;
+  items: ReturnType<typeof homeNewItems>;
+  moreHref?: string;
+  moreLabel?: string;
+}) {
+  if (!items.length) return null;
+  return (
+    <section className="mt-14 border-t border-line pt-12 md:mt-16 md:pt-14">
+      <SectionTitle>{title}</SectionTitle>
+      <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
+        {items.map((p) => (
+          <ProductCard key={p.id} product={p} />
+        ))}
+      </div>
+      {moreHref ? (
+        <div className="mt-6 flex justify-center">
+          <HomePillLink href={moreHref}>{moreLabel}</HomePillLink>
+        </div>
+      ) : null}
+    </section>
+  );
+}
 
 export function HomePage() {
   const router = useRouter();
   const { products, productsById, minPrice, maxPrice, ready } = useCatalog();
   const { resetFilters, setFilters } = useShop();
-  const [tab, setTab] = useState<Tab>("new");
 
-  const gridItems =
-    tab === "new"
-      ? homeNewItems(products)
-      : tab === "hits"
-        ? homeHits(products)
-        : homeSaleItems(products);
+  const newItems = homeNewItems(products, 4);
+  const saleItems = homeSaleItems(products, 4);
+  const allItems = homeAllItems(products, 12);
 
   const heroIds = [716, 2222, 389];
   const loading = !ready && products.length === 0;
@@ -68,7 +90,7 @@ export function HomePage() {
                     ...defaultFilters(minPrice, maxPrice),
                     sort: "new",
                   });
-                  router.push("/catalog");
+                  router.push("/catalog?sort=new");
                 }}
               >
                 Нова колекція
@@ -114,45 +136,27 @@ export function HomePage() {
             <SectionTitle>Категорії</SectionTitle>
             <TextLink href="/catalog">Усі товари</TextLink>
           </div>
-
           <CategoryRail productsById={productsById} products={products} />
-          <div className="mt-5 flex justify-center">
-            <HomePillLink href="/catalog">Всі товари</HomePillLink>
-          </div>
         </section>
 
-        <section className="mt-14 md:mt-16">
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-            <div className="flex flex-wrap gap-6 sm:gap-8">
-              {(
-                [
-                  ["new", "Новинки"],
-                  ["hits", "Популярне"],
-                  ["sale", "Зі знижкою"],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setTab(key)}
-                  className={`border-b pb-1.5 text-[0.75rem] font-semibold uppercase tracking-caps transition-colors ${
-                    tab === key
-                      ? "border-sale text-sale"
-                      : "border-transparent text-mute hover:text-ink"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-            <TextLink href="/catalog">Дивитись усе</TextLink>
-          </div>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
-            {gridItems.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        </section>
+        <ProductSection
+          title="Новинки"
+          items={newItems}
+          moreHref="/catalog?sort=new"
+        />
+
+        <ProductSection
+          title="Акційні пропозиції"
+          items={saleItems}
+          moreHref="/promotional-offers"
+        />
+
+        <ProductSection
+          title="Всі товари"
+          items={allItems}
+          moreHref="/catalog"
+          moreLabel="У каталог"
+        />
       </Container>
     </>
   );

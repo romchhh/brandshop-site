@@ -2,14 +2,23 @@ import {
   brandsInCatalog,
   priceBounds,
   slimProducts,
+  type Product,
 } from "@/lib/catalog";
 import { SYNC_INTERVAL_MS } from "./config";
+import { sanitizeStoredSizes } from "./sizes";
 import {
   readSnapshotFromDisk,
   seedSnapshot,
   syncCatalog,
 } from "./sync-catalog";
 import type { CatalogPublic, CatalogSnapshot } from "./types";
+
+function withCleanSizes(products: Product[]): Product[] {
+  return products.map((p) => ({
+    ...p,
+    sizes: sanitizeStoredSizes(p.sizes),
+  }));
+}
 
 type GlobalCatalog = {
   snapshot: CatalogSnapshot | null;
@@ -64,7 +73,7 @@ export function toPublic(snapshot: CatalogSnapshot): CatalogPublic {
   const key = `${snapshot.syncedAt}:${snapshot.productCount}`;
   if (s.publicView && s.publicKey === key) return s.publicView;
 
-  const products = slimProducts(snapshot.products);
+  const products = slimProducts(withCleanSizes(snapshot.products));
   const { min, max } = priceBounds(products);
   const view: CatalogPublic = {
     syncedAt: snapshot.syncedAt,

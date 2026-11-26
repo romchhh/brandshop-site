@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CATEGORY_GROUPS,
   COLOR_SWATCH,
   matchProduct,
+  sortSizes,
   type CatalogFilters as Filters,
   type Product,
 } from "@/lib/catalog";
-import { btnSolidClass } from "@/lib/uiStyles";
+import { isValidCatalogSize } from "@/lib/feed/sizes";
+import { btnSolidClass, fieldClass } from "@/lib/uiStyles";
 import { useCatalog } from "./CatalogProvider";
 import { useShop } from "./ShopProvider";
 
@@ -35,7 +37,10 @@ function buildFacetCounts(
       for (const c of p.colors) colors[c] = (colors[c] ?? 0) + 1;
     }
     if (matchProduct(p, filters, "sizes", categories)) {
-      for (const s of p.sizes) sizes[s] = (sizes[s] ?? 0) + 1;
+      for (const s of p.sizes) {
+        if (!isValidCatalogSize(s)) continue;
+        sizes[s] = (sizes[s] ?? 0) + 1;
+      }
     }
   }
 
@@ -101,6 +106,156 @@ function sameIds(a: number[], b: number[]) {
   return b.every((id) => set.has(id));
 }
 
+function clampPrice(n: number, lo: number, hi: number) {
+  if (!Number.isFinite(n)) return lo;
+  return Math.min(hi, Math.max(lo, Math.round(n)));
+}
+
+function pricePresets(minBound: number, maxBound: number) {
+  const span = maxBound - minBound;
+  if (span <= 0) return [] as { label: string; min: number; max: number }[];
+
+  const mid = Math.round((minBound + maxBound) / 2 / 100) * 100;
+  const q1 = Math.round((minBound + span * 0.25) / 100) * 100;
+  const q3 = Math.round((minBound + span * 0.75) / 100) * 100;
+
+  const list = [
+    { label: "Усі", min: minBound, max: maxBound },
+    { label: `до ${q1}`, min: minBound, max: q1 },
+    { label: `${q1}–${mid}`, min: q1, max: mid },
+    { label: `${mid}–${q3}`, min: mid, max: q3 },
+    { label: `від ${q3}`, min: q3, max: maxBound },
+  ];
+
+  return list.filter(
+    (p, i, arr) =>
+      p.min < p.max &&
+      arr.findIndex((x) => x.min === p.min && x.max === p.max) === i,
+  );
+}
+
+function PriceFilter({
+  minBound,
+  maxBound,
+  min,
+  max,
+  onChange,
+}: {
+  minBound: number;
+  maxBound: number;
+  min: number;
+  max: number;
+  onChange: (min: number, max: number) => void;
+}) {
+  const [from, setFrom] = useState(String(min));
+  const [to, setTo] = useState(String(max));
+  const presets = useMemo(
+    () => pricePresets(minBound, maxBound),
+    [minBound, maxBound],
+  );
+
+  useEffect(() => {
+    setFrom(String(min));
+    setTo(String(max));
+  }, [min, max]);
+
+  function commit(nextFrom = from, nextTo = to) {
+    let a = clampPrice(Number(nextFrom.replace(/\s/g, "")), minBound, maxBound);
+    let b = clampPrice(Number(nextTo.replace(/\s/g, "")), minBound, maxBound);
+    if (a > b) [a, b] = [b, a];
+    setFrom(String(a));
+    setTo(String(b));
+    if (a !== min || b !== max) onChange(a, b);
+  }
+
+  return (
+    <div className="space-y-4 py-4">
+      <div className="grid grid-cols-2 gap-2.5">
+        <label className="block">
+          <span className="mb-1.5 block text-[0.7rem] uppercase tracking-[0.12em] text-mute">
+            Від
+          </span>
+          <div className="relative">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={from}
+              onChange={(e) => setFrom(e.target.value.replace(/[^\d]/g, ""))}
+              onBlur={() => commit()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.currentTarget.blur();
+                }
+              }}
+              className={fieldClass("h-11 w-full px-3 pr-10 text-sm tabular-nums")}
+              aria-label="Ціна від"
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-mute">
+              ₴
+            </span>
+          </div>
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[0.7rem] uppercase tracking-[0.12em] text-mute">
+            До
+          </span>
+          <div className="relative">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={to}
+              onChange={(e) => setTo(e.target.value.replace(/[^\d]/g, ""))}
+              onBlur={() => commit()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.currentTarget.blur();
+                }
+              }}
+              className={fieldClass("h-11 w-full px-3 pr-10 text-sm tabular-nums")}
+              aria-label="Ціна до"
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-mute">
+              ₴
+            </span>
+          </div>
+        </label>
+      </div>
+
+      {presets.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {presets.map((p) => {
+            const active = min === p.min && max === p.max;
+            return (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => onChange(p.min, p.max)}
+                className={`rounded-2xl px-3 py-1.5 text-xs font-medium transition-colors ${
+                  active
+                    ? "bg-sale text-white"
+                    : "bg-black/[0.06] text-black/70 hover:bg-sale-soft hover:text-sale"
+                }`}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {(min > minBound || max < maxBound) && (
+        <button
+          type="button"
+          onClick={() => onChange(minBound, maxBound)}
+          className="text-xs text-mute underline hover:text-sale"
+        >
+          Скинути ціну
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function CatalogSidebar({
   onClose,
   variant = "sidebar",
@@ -160,9 +315,13 @@ export function CatalogSidebar({
       .sort((a, b) => categories[a].localeCompare(categories[b], "uk"));
   }, [categories, productCountByCat]);
 
-  const sizes = [
-    ...new Set([...products.flatMap((p) => p.sizes), ...filters.sizes]),
-  ].sort();
+  const sizes = sortSizes([
+    ...new Set(
+      [...products.flatMap((p) => p.sizes), ...filters.sizes].filter(
+        isValidCatalogSize,
+      ),
+    ),
+  ]);
 
   const selectedGroup = groups.find((g) =>
     sameIds(filters.categories, g.liveIds),
@@ -382,42 +541,20 @@ export function CatalogSidebar({
           title="Ціна"
           open={openPrice}
           onToggle={() => setOpenPrice((v) => !v)}
+          hint={
+            filters.min > minPrice || filters.max < maxPrice
+              ? `${filters.min}–${filters.max}`
+              : undefined
+          }
         />
         {openPrice && (
-          <div className="space-y-3 py-4">
-            <div className="flex justify-between text-sm text-[#1C1C1C]">
-              <span>{filters.min} грн</span>
-              <span>{filters.max} грн</span>
-            </div>
-            <input
-              type="range"
-              min={minPrice}
-              max={maxPrice}
-              step={50}
-              value={filters.min}
-              onChange={(e) =>
-                setFilters({
-                  min: Math.min(+e.target.value, filters.max - 50),
-                })
-              }
-              className="w-full accent-ink"
-              aria-label="Ціна від"
-            />
-            <input
-              type="range"
-              min={minPrice}
-              max={maxPrice}
-              step={50}
-              value={filters.max}
-              onChange={(e) =>
-                setFilters({
-                  max: Math.max(+e.target.value, filters.min + 50),
-                })
-              }
-              className="w-full accent-ink"
-              aria-label="Ціна до"
-            />
-          </div>
+          <PriceFilter
+            minBound={minPrice}
+            maxBound={maxPrice}
+            min={filters.min}
+            max={filters.max}
+            onChange={(min, max) => setFilters({ min, max })}
+          />
         )}
       </div>
 

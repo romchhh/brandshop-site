@@ -1,17 +1,6 @@
 import Link from "next/link";
-import { NewsletterForm } from "./NewsletterForm";
+import { BUYER_LINKS, SHOP_LINKS, SITE } from "@/lib/site";
 import { Container } from "./ui";
-
-const SHOP = [
-  { href: "/catalog", label: "Каталог" },
-  { href: "/catalog?sort=new", label: "Новинки" },
-  { href: "/favorites", label: "Обране" },
-] as const;
-
-const BUYERS = [
-  { href: "/cart", label: "Кошик" },
-  { href: "/checkout", label: "Оформлення" },
-] as const;
 
 export function Footer() {
   return (
@@ -20,7 +9,7 @@ export function Footer() {
         <div className="flex flex-col gap-8 md:gap-12 lg:grid lg:grid-cols-4 lg:gap-10">
           <div className="text-center md:text-left lg:col-span-1">
             <p className="text-[1.05rem] font-semibold uppercase tracking-brand text-ink md:text-[1.125rem]">
-              BrandShop
+              {SITE.brand}
             </p>
             <p className="mx-auto mt-3 max-w-[22rem] text-[0.875rem] leading-relaxed text-mute md:mx-0 md:mt-5 md:max-w-sm md:text-[0.9375rem]">
               Чоловічий одяг, взуття та аксесуари. Нова колекція щотижня.
@@ -33,7 +22,7 @@ export function Footer() {
                 Магазин
               </h4>
               <ul className="space-y-2.5 text-[0.9375rem] md:space-y-3.5 md:text-[1.0625rem]">
-                {SHOP.map((item) => (
+                {SHOP_LINKS.map((item) => (
                   <li key={item.href}>
                     <Link href={item.href} className="hover:text-sale">
                       {item.label}
@@ -48,8 +37,8 @@ export function Footer() {
                 Покупцям
               </h4>
               <ul className="space-y-2.5 text-[0.9375rem] md:space-y-3.5 md:text-[1.0625rem]">
-                {BUYERS.map((item) => (
-                  <li key={item.href}>
+                {BUYER_LINKS.map((item) => (
+                  <li key={`${item.href}-${item.label}`}>
                     <Link href={item.href} className="hover:text-sale">
                       {item.label}
                     </Link>
@@ -59,16 +48,34 @@ export function Footer() {
             </nav>
           </div>
 
-          <div className="md:col-span-2 lg:col-span-1">
-            <h4 className="mb-3.5 text-center text-[0.7rem] font-semibold uppercase tracking-caps text-mute md:mb-6 md:text-left md:text-[0.75rem]">
-              Новини колекцій
+          <div className="text-center md:text-left md:col-span-2 lg:col-span-1">
+            <h4 className="mb-3.5 text-[0.7rem] font-semibold uppercase tracking-caps text-mute md:mb-6 md:text-[0.75rem]">
+              Telegram
             </h4>
-            <NewsletterForm />
+            <a
+              href={SITE.telegram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-[0.9375rem] font-semibold text-sale hover:underline md:text-[1.0625rem]"
+            >
+              {SITE.telegramLabel}
+            </a>
+            <p className="mt-2 text-[0.8125rem] leading-relaxed text-mute md:text-[0.875rem]">
+              Новинки, акції та відповіді в чаті
+            </p>
           </div>
         </div>
 
-        <div className="mt-8 border-t border-line pt-5 text-center text-[0.8125rem] text-mute md:mt-14 md:pt-6 md:text-left md:text-[0.9rem]">
-          <span>© 2026 BrandShop</span>
+        <div className="mt-8 flex flex-col gap-2 border-t border-line pt-5 text-center text-[0.8125rem] text-mute md:mt-14 md:flex-row md:items-center md:justify-between md:pt-6 md:text-left md:text-[0.9rem]">
+          <span>© 2026 {SITE.brandFull}</span>
+          <a
+            href={SITE.domain}
+            className="hover:text-sale"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            brandshop.in.ua
+          </a>
         </div>
       </Container>
     </footer>

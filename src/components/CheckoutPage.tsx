@@ -2,24 +2,163 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { ONE_SIZE, formatMoney } from "@/lib/catalog";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ONE_SIZE, formatMoney, productImageUrl } from "@/lib/catalog";
+import { normalizeUaPhone } from "@/lib/nova-poshta";
+import {
+  DELIVERY_OPTIONS,
+  PAYMENT_OPTIONS,
+  cartToOrderItems,
+  deliveryLabel,
+  paymentLabel,
+  saveLastOrder,
+  type DeliveryMethod,
+  type PaymentMethod,
+} from "@/lib/order";
+import { btnSolidClass, fieldClass } from "@/lib/uiStyles";
 import { useCatalog } from "./CatalogProvider";
 import { useShop } from "./ShopProvider";
-import { ProductImage } from "./ProductImage";
-import { OrderSummary } from "./OrderSummary";
 import { Button, Container, PageTitle } from "./ui";
+
+type Step = 1 | 2;
+
+type NpCity = { ref: string; name: string };
+type NpWarehouse = { ref: string; description: string; number: string };
 
 export function CheckoutPage() {
   const router = useRouter();
   const { productsById } = useCatalog();
-  const { cart, clearCart } = useShop();
+  const { cart, cartSum, cartCount, clearCart } = useShop();
+
+  const [step, setStep] = useState<Step>(1);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("+380");
+  const [email, setEmail] = useState("");
+
+  const [delivery, setDelivery] = useState<DeliveryMethod>("nova_poshta");
+  const [payment, setPayment] = useState<PaymentMethod>("card");
+  const [comment, setComment] = useState("");
+
+  const [city, setCity] = useState("");
+  const [cityRef, setCityRef] = useState("");
+  const [warehouse, setWarehouse] = useState("");
+  const [warehouseRef, setWarehouseRef] = useState("");
+
+  const [cities, setCities] = useState<NpCity[]>([]);
+  const [warehouses, setWarehouses] = useState<NpWarehouse[]>([]);
+  const [cityOpen, setCityOpen] = useState(false);
+  const [whOpen, setWhOpen] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
+  const [loadingWh, setLoadingWh] = useState(false);
+  const [npHint, setNpHint] = useState<string | null>(null);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const isNp = delivery === "nova_poshta";
+  const cityBoxRef = useRef<HTMLDivElement>(null);
+  const whBoxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      const t = e.target as Node;
+      if (cityBoxRef.current && !cityBoxRef.current.contains(t)) setCityOpen(false);
+      if (whBoxRef.current && !whBoxRef.current.contains(t)) setWhOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, []);
+
+  useEffect(() => {
+    if (!isNp) {
+      setCities([]);
+      setWarehouses([]);
+      setNpHint(null);
+      return;
+    }
+    const q = city.trim();
+    if (q.length < 2 || cityRef) {
+      if (q.length < 2) setCities([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      setLoadingCities(true);
+      setNpHint(null);
+      fetch(`/api/nova-poshta/cities?q=${encodeURIComponent(q)}`)
+        .then((r) => r.json())
+        .then((data: { cities?: NpCity[]; error?: string | null }) => {
+          if (data.error) {
+            setCities([]);
+            setNpHint(data.error);
+            return;
+          }
+          setCities(data.cities ?? []);
+          setCityOpen(true);
+        })
+        .catch(() => {
+          setCities([]);
+          setNpHint("Не вдалося завантажити міста");
+        })
+        .finally(() => setLoadingCities(false));
+    }, 280);
+    return () => clearTimeout(t);
+  }, [city, cityRef, isNp]);
+
+  useEffect(() => {
+    if (!isNp || !city.trim()) {
+      setWarehouses([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      setLoadingWh(true);
+      const params = new URLSearchParams();
+      if (cityRef) params.set("cityRef", cityRef);
+      else params.set("cityName", city.trim());
+      const q = warehouse.trim();
+      if (q.length >= 1) params.set("q", q);
+
+      fetch(`/api/nova-poshta/warehouses?${params}`)
+        .then((r) => r.json())
+        .then((data: { warehouses?: NpWarehouse[]; error?: string | null }) => {
+          if (data.error) {
+            setWarehouses([]);
+            setNpHint(data.error);
+            return;
+          }
+          setWarehouses(data.warehouses ?? []);
+        })
+        .catch(() => setWarehouses([]))
+        .finally(() => setLoadingWh(false));
+    }, 320);
+    return () => clearTimeout(t);
+  }, [city, cityRef, warehouse, isNp]);
+
+  const filteredCities = useMemo(() => {
+    const q = city.toLowerCase().trim();
+    return [...cities]
+      .filter((c) => c.name.toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name, "uk"))
+      .slice(0, 12);
+  }, [cities, city]);
+
+  const filteredWh = useMemo(() => {
+    const q = warehouse.toLowerCase().trim();
+    const list = q
+      ? warehouses.filter((w) => w.description.toLowerCase().includes(q))
+      : warehouses;
+    return [...list]
+      .sort((a, b) => a.description.localeCompare(b.description, "uk"))
+      .slice(0, 20);
+  }, [warehouses, warehouse]);
 
   if (cart.length === 0) {
     return (
       <Container className="py-24 text-center">
         <PageTitle>Кошик порожній</PageTitle>
+        <p className="mx-auto mt-4 max-w-md text-mute">
+          Додайте товари, щоб оформити замовлення.
+        </p>
         <Button href="/cart" variant="solid" className="mt-8">
           До кошика
         </Button>
@@ -27,198 +166,542 @@ export function CheckoutPage() {
     );
   }
 
-  function placeOrder(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
+  function validateStep1() {
     const next: Record<string, string> = {};
-    const fn = String(fd.get("fn") || "");
-    const ph = String(fd.get("ph") || "");
-    const ct = String(fd.get("ct") || "");
-    const ad = String(fd.get("ad") || "");
-    if (fn.trim().length < 3) next.fn = "Вкажіть ім’я та прізвище";
-    if (ph.replace(/\D/g, "").length < 10) next.ph = "Вкажіть коректний телефон";
-    if (ct.trim().length < 2) next.ct = "Вкажіть місто";
-    if (ad.trim().length < 2) next.ad = "Вкажіть відділення або адресу";
+    if (name.trim().length < 3) next.name = "Вкажіть ім’я та прізвище";
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 12) next.phone = "Вкажіть коректний телефон (+380…)";
     setErrors(next);
-    if (Object.keys(next).length) return;
-    const n = String(Math.floor(100000 + Math.random() * 900000));
-    clearCart();
-    router.push(`/order/${n}`);
+    return Object.keys(next).length === 0;
   }
 
+  function validateStep2() {
+    const next: Record<string, string> = {};
+    if (isNp) {
+      if (!cityRef && city.trim().length < 2) next.city = "Оберіть місто зі списку";
+      if (!warehouseRef && warehouse.trim().length < 3) {
+        next.warehouse = "Оберіть відділення або поштомат";
+      }
+    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }
+
+  function goNext() {
+    if (!validateStep1()) return;
+    setStep(2);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function placeOrder() {
+    if (!validateStep2()) return;
+    setSubmitting(true);
+    setErrors({});
+
+    const number = String(Math.floor(100000 + Math.random() * 900000));
+    const items = cartToOrderItems(cart, productsById);
+    const order = {
+      number,
+      createdAt: new Date().toISOString(),
+      name: name.trim(),
+      phone: normalizeUaPhone(phone),
+      email: email.trim() || undefined,
+      deliveryMethod: delivery,
+      deliveryLabel: deliveryLabel(
+        delivery,
+        isNp ? city.trim() : undefined,
+        isNp ? warehouse.trim() : undefined,
+      ),
+      city: isNp ? city.trim() : undefined,
+      warehouse: isNp ? warehouse.trim() : undefined,
+      paymentMethod: payment,
+      paymentLabel: paymentLabel(payment),
+      comment: comment.trim() || undefined,
+      items,
+      total: cartSum,
+    };
+
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(order),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setErrors({
+          submit:
+            data.error ??
+            "Не вдалося надіслати замовлення. Спробуйте ще раз.",
+        });
+        setSubmitting(false);
+        return;
+      }
+
+      saveLastOrder(order);
+      clearCart();
+      router.push(`/order/${number}`);
+    } catch {
+      setErrors({
+        submit: "Помилка мережі. Перевірте з’єднання і спробуйте знову.",
+      });
+      setSubmitting(false);
+    }
+  }
+
+  const inputCls = (err?: string) =>
+    fieldClass(
+      `h-14 w-full px-4 text-[1rem] ${err ? "border-sale ring-2 ring-sale/15" : ""}`,
+    );
+
   return (
-    <Container className="pb-24">
-      <nav className="pt-7 text-[0.85rem] text-mute">
-        <Link href="/">Головна</Link> / <Link href="/cart">Кошик</Link> /
-        Оформлення
-      </nav>
-      <div className="py-6">
-        <PageTitle>Оформлення</PageTitle>
-      </div>
+    <div className="bg-gradient-to-b from-sale-soft/40 via-white to-white pb-28">
+      <Container>
+        <nav className="pt-7 text-[0.85rem] text-mute">
+          <Link href="/" className="hover:text-sale">
+            Головна
+          </Link>{" "}
+          /{" "}
+          <Link href="/cart" className="hover:text-sale">
+            Кошик
+          </Link>{" "}
+          / <span className="text-ink">Оформлення</span>
+        </nav>
 
-      <div className="grid gap-12 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <form id="checkout-form" onSubmit={placeOrder} className="space-y-8" noValidate>
-          <div>
-            <h3 className="mb-4 text-[0.72rem] uppercase tracking-[0.2em]">
-              Контакти
-            </h3>
-            <div className="grid gap-5 md:grid-cols-2">
-              <Field name="fn" label="Ім’я та прізвище" placeholder="Олександр Коваленко" error={errors.fn} />
-              <Field name="ph" label="Телефон" type="tel" placeholder="+380 __ ___ __ __" error={errors.ph} />
-            </div>
-            <div className="mt-5">
-              <Field name="em" label="Email (необов’язково)" type="email" placeholder="name@mail.com" />
-            </div>
-          </div>
-
-          <div>
-            <h3 className="mb-4 text-[0.72rem] uppercase tracking-[0.2em]">
-              Доставка
-            </h3>
-            <div className="space-y-3">
-              <Radio name="dl" value="np" defaultChecked title="Нова Пошта, відділення" hint="Забрати у вибраному відділенні" />
-              <Radio name="dl" value="cr" title="Нова Пошта, кур’єр" hint="Доставка за вказаною адресою" />
-              <Radio name="dl" value="up" title="Укрпошта" hint="Відділення зв’язку" />
-            </div>
-            <div className="mt-5 grid gap-5 md:grid-cols-2">
-              <Field name="ct" label="Місто" placeholder="Київ" error={errors.ct} />
-              <Field name="ad" label="Відділення або адреса" placeholder="Відділення №12" error={errors.ad} />
-            </div>
-          </div>
-
-          <div>
-            <h3 className="mb-4 text-[0.72rem] uppercase tracking-[0.2em]">
-              Оплата
-            </h3>
-            <div className="space-y-3">
-              <Radio name="pm" value="cod" defaultChecked title="При отриманні" hint="Готівкою або карткою у відділенні" />
-              <Radio name="pm" value="card" title="Карткою онлайн" hint="Visa, Mastercard, Apple Pay, Google Pay" />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="cm" className="mb-2 block text-[0.72rem] uppercase tracking-[0.16em]">
-              Коментар до замовлення
-            </label>
-            <textarea
-              id="cm"
-              name="cm"
-              rows={3}
-              placeholder="Побажання щодо розміру чи доставки"
-              className="w-full resize-y rounded-2xl border border-line bg-white px-4 py-3 text-[1rem] outline-none focus:border-ink"
-            />
-          </div>
-        </form>
-
-        <div>
-          <div className="mb-4 space-y-3 rounded-2xl border border-line p-4">
-            {cart.map((line) => {
-              const p = productsById[line.id];
-              if (!p) return null;
-              return (
-                <div
-                  key={`${line.id}-${line.size}`}
-                  className="grid grid-cols-[4rem_minmax(0,1fr)_auto] gap-3 border-b border-line pb-3 last:border-0 last:pb-0"
-                >
-                  <ProductImage product={p} className="!aspect-[3/4]" sizes="64px" />
-                  <div>
-                    <p className="text-sm font-medium leading-snug">{p.title}</p>
-                    <p className="text-xs text-mute mt-1">
-                      {line.qty} × {line.size !== ONE_SIZE ? line.size : "—"}
-                    </p>
-                  </div>
-                  <span className="text-sm tabular-nums">
-                    {formatMoney(p.priceSite * line.qty)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <OrderSummary
-            footer={
-              <>
-                <Button
-                  variant="solid"
-                  className="mt-6 w-full"
-                  type="submit"
-                  onClick={() => {
-                    (
-                      document.getElementById(
-                        "checkout-form",
-                      ) as HTMLFormElement | null
-                    )?.requestSubmit();
-                  }}
-                >
-                  Підтвердити замовлення
-                </Button>
-                <p className="mt-3 text-center text-xs text-mute">
-                  Це прототип: дані нікуди не надсилаються.
-                </p>
-              </>
-            }
-          />
+        <div className="py-6 md:py-8">
+          <PageTitle>Оформлення замовлення</PageTitle>
+          <CheckoutSteps step={step} onStep={(s) => s < step && setStep(s)} />
         </div>
-      </div>
-    </Container>
-  );
-}
 
-function Field({
-  name,
-  label,
-  type = "text",
-  placeholder,
-  error,
-}: {
-  name: string;
-  label: string;
-  type?: string;
-  placeholder?: string;
-  error?: string;
-}) {
-  return (
-    <div>
-      <label htmlFor={name} className="mb-2 block text-[0.72rem] uppercase tracking-[0.16em]">
-        {label}
-      </label>
-      <input
-        id={name}
-        name={name}
-        type={type}
-        placeholder={placeholder}
-        className={`h-14 w-full rounded-2xl border bg-white px-4 text-[1.0625rem] outline-none focus:border-ink ${error ? "border-sale" : "border-line"}`}
-      />
-      {error && <p className="mt-1 text-xs text-sale">{error}</p>}
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem] xl:gap-12">
+          <div className="space-y-5">
+            {step === 1 ? (
+              <section className="rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] sm:p-7">
+                <h2 className="text-lg font-semibold text-ink">Контактні дані</h2>
+                <p className="mt-1 text-sm text-mute">
+                  Ми зв’яжемось для підтвердження замовлення
+                </p>
+
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <label className="mb-2 block text-[0.72rem] uppercase tracking-[0.16em] text-mute">
+                      Ім’я та прізвище
+                    </label>
+                    <input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className={inputCls(errors.name)}
+                      placeholder="Олександр Коваленко"
+                      autoComplete="name"
+                    />
+                    {errors.name && (
+                      <p className="mt-1 text-xs text-sale">{errors.name}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-[0.72rem] uppercase tracking-[0.16em] text-mute">
+                      Телефон
+                    </label>
+                    <input
+                      value={phone}
+                      onChange={(e) => {
+                        let v = e.target.value;
+                        if (!v.startsWith("+380")) {
+                          const d = v.replace(/\D/g, "");
+                          v = d.startsWith("380")
+                            ? `+${d}`
+                            : `+380${d.replace(/^0/, "")}`;
+                        }
+                        setPhone(v.slice(0, 13));
+                      }}
+                      className={inputCls(errors.phone)}
+                      placeholder="+380XXXXXXXXX"
+                      inputMode="tel"
+                      autoComplete="tel"
+                    />
+                    {errors.phone && (
+                      <p className="mt-1 text-xs text-sale">{errors.phone}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-[0.72rem] uppercase tracking-[0.16em] text-mute">
+                      Email <span className="normal-case tracking-normal">(необов’язково)</span>
+                    </label>
+                    <input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={inputCls()}
+                      placeholder="name@mail.com"
+                      type="email"
+                      autoComplete="email"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-8 border-t border-line pt-6">
+                  <h3 className="text-sm font-semibold uppercase tracking-caps text-mute">
+                    Товари · {cartCount}
+                  </h3>
+                  <ul className="mt-4 divide-y divide-line">
+                    {cart.map((line) => {
+                      const p = productsById[line.id];
+                      if (!p) return null;
+                      return (
+                        <li
+                          key={`${line.id}-${line.size}`}
+                          className="flex gap-4 py-4 first:pt-0 last:pb-0"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={productImageUrl(p)}
+                            alt=""
+                            className="h-20 w-16 shrink-0 rounded-xl object-cover bg-ph"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium leading-snug text-ink">
+                              {p.title}
+                            </p>
+                            <p className="mt-1 text-xs text-mute">
+                              {line.size !== ONE_SIZE ? `Розмір ${line.size} · ` : ""}
+                              {line.qty} шт.
+                            </p>
+                          </div>
+                          <span className="shrink-0 text-sm font-semibold tabular-nums">
+                            {formatMoney(p.priceSite * line.qty)}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={goNext}
+                  className={btnSolidClass("mt-8 h-14 w-full px-8 uppercase tracking-caps")}
+                >
+                  Далі · Доставка і оплата
+                </button>
+              </section>
+            ) : (
+              <section className="rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] sm:p-7">
+                <h2 className="text-lg font-semibold text-ink">Доставка і оплата</h2>
+                <p className="mt-1 text-sm text-mute">
+                  Оберіть зручний спосіб отримання та оплати
+                </p>
+
+                <div className="mt-6">
+                  <p className="mb-3 text-[0.72rem] uppercase tracking-[0.16em] text-mute">
+                    Спосіб доставки
+                  </p>
+                  <div className="space-y-2.5">
+                    {DELIVERY_OPTIONS.map((opt) => (
+                      <Choice
+                        key={opt.value}
+                        active={delivery === opt.value}
+                        title={opt.title}
+                        hint={opt.hint}
+                        onClick={() => {
+                          setDelivery(opt.value);
+                          setErrors({});
+                          if (opt.value !== "nova_poshta") {
+                            setCity("");
+                            setCityRef("");
+                            setWarehouse("");
+                            setWarehouseRef("");
+                          }
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {isNp && (
+                  <div className="mt-6 space-y-4 border-t border-line pt-6">
+                    <p className="text-[0.72rem] uppercase tracking-[0.16em] text-mute">
+                      Місто доставки
+                    </p>
+                    <div ref={cityBoxRef} className="relative">
+                      <input
+                        value={city}
+                        onChange={(e) => {
+                          setCity(e.target.value);
+                          setCityRef("");
+                          setWarehouse("");
+                          setWarehouseRef("");
+                          setCityOpen(true);
+                        }}
+                        onFocus={() => setCityOpen(true)}
+                        className={inputCls(errors.city)}
+                        placeholder="Почніть вводити місто…"
+                        autoComplete="off"
+                      />
+                      {loadingCities && (
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-mute">
+                          …
+                        </span>
+                      )}
+                      {cityOpen && filteredCities.length > 0 && (
+                        <ul className="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-2xl border border-black/[0.08] bg-white py-1 shadow-[0_12px_32px_rgba(0,0,0,0.1)]">
+                          {filteredCities.map((c) => (
+                            <li key={c.ref}>
+                              <button
+                                type="button"
+                                className="w-full px-4 py-3 text-left text-sm hover:bg-sale-soft"
+                                onClick={() => {
+                                  setCity(c.name);
+                                  setCityRef(c.ref);
+                                  setCityOpen(false);
+                                  setWarehouse("");
+                                  setWarehouseRef("");
+                                  setWhOpen(true);
+                                }}
+                              >
+                                {c.name}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {errors.city && (
+                        <p className="mt-1 text-xs text-sale">{errors.city}</p>
+                      )}
+                    </div>
+
+                    <div ref={whBoxRef} className="relative">
+                      <label className="mb-2 block text-[0.72rem] uppercase tracking-[0.16em] text-mute">
+                        Відділення / поштомат
+                      </label>
+                      <input
+                        value={warehouse}
+                        onChange={(e) => {
+                          setWarehouse(e.target.value);
+                          setWarehouseRef("");
+                          setWhOpen(true);
+                        }}
+                        onFocus={() => setWhOpen(true)}
+                        disabled={!city.trim()}
+                        className={inputCls(errors.warehouse) + " disabled:opacity-50"}
+                        placeholder={
+                          city.trim()
+                            ? "Номер або назва відділення…"
+                            : "Спочатку оберіть місто"
+                        }
+                        autoComplete="off"
+                      />
+                      {loadingWh && (
+                        <span className="absolute right-4 top-[2.85rem] text-xs text-mute">
+                          …
+                        </span>
+                      )}
+                      {whOpen && city.trim() && filteredWh.length > 0 && (
+                        <ul className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-2xl border border-black/[0.08] bg-white py-1 shadow-[0_12px_32px_rgba(0,0,0,0.1)]">
+                          {filteredWh.map((w) => (
+                            <li key={w.ref}>
+                              <button
+                                type="button"
+                                className="w-full px-4 py-3 text-left text-sm hover:bg-sale-soft"
+                                onClick={() => {
+                                  setWarehouse(w.description);
+                                  setWarehouseRef(w.ref);
+                                  setWhOpen(false);
+                                }}
+                              >
+                                {w.description}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {errors.warehouse && (
+                        <p className="mt-1 text-xs text-sale">{errors.warehouse}</p>
+                      )}
+                    </div>
+                    {npHint && (
+                      <p className="text-xs text-mute">{npHint}</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-6 border-t border-line pt-6">
+                  <p className="mb-3 text-[0.72rem] uppercase tracking-[0.16em] text-mute">
+                    Спосіб оплати
+                  </p>
+                  <div className="space-y-2.5">
+                    {PAYMENT_OPTIONS.map((opt) => (
+                      <Choice
+                        key={opt.value}
+                        active={payment === opt.value}
+                        title={opt.title}
+                        hint={opt.hint}
+                        onClick={() => setPayment(opt.value)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-6 border-t border-line pt-6">
+                  <label className="mb-2 block text-[0.72rem] uppercase tracking-[0.16em] text-mute">
+                    Коментар до замовлення
+                  </label>
+                  <textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    rows={3}
+                    placeholder="Побажання щодо розміру чи доставки"
+                    className={fieldClass(
+                      "w-full resize-y px-4 py-3 text-[1rem] leading-relaxed",
+                    )}
+                  />
+                </div>
+
+                {errors.submit && (
+                  <p className="mt-6 rounded-2xl border border-sale/30 bg-sale-soft px-4 py-3 text-sm text-sale">
+                    {errors.submit}
+                  </p>
+                )}
+
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="inline-flex h-14 items-center justify-center rounded-2xl border border-ink bg-white px-6 text-[0.75rem] font-semibold uppercase tracking-caps text-ink transition-colors hover:bg-ph sm:w-auto"
+                  >
+                    Назад
+                  </button>
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void placeOrder()}
+                    className={btnSolidClass(
+                      "h-14 flex-1 px-8 uppercase tracking-caps",
+                    )}
+                  >
+                    {submitting ? "Оформлюємо…" : "Підтвердити"}
+                  </button>
+                </div>
+              </section>
+            )}
+          </div>
+
+          <aside className="h-fit rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] xl:sticky xl:top-28">
+            <h3 className="text-[0.8125rem] font-medium uppercase tracking-[0.2em] text-ink">
+              Ваше замовлення
+            </h3>
+            <div className="mt-5 space-y-3 text-[1.05rem] tabular-nums">
+              <div className="flex justify-between gap-3">
+                <span className="text-mute">Товари ({cartCount})</span>
+                <span>{formatMoney(cartSum)}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-mute">Доставка</span>
+                <span className="max-w-[10rem] text-right text-sm font-medium text-black/55">
+                  {isNp ? "за тарифами НП" : "безкоштовно"}
+                </span>
+              </div>
+              <div className="mt-2 flex justify-between gap-3 border-t border-line pt-4 text-xl font-semibold">
+                <span>Разом</span>
+                <span>{formatMoney(cartSum)}</span>
+              </div>
+            </div>
+            {step === 2 && (
+              <p className="mt-4 text-xs leading-relaxed text-mute">
+                Після підтвердження менеджер надішле деталі оплати
+                {payment === "card" ? " на картку" : ""} та статус відправлення.
+              </p>
+            )}
+          </aside>
+        </div>
+      </Container>
     </div>
   );
 }
 
-function Radio({
-  name,
-  value,
+function CheckoutSteps({
+  step,
+  onStep,
+}: {
+  step: Step;
+  onStep: (s: Step) => void;
+}) {
+  const items: { n: Step; label: string }[] = [
+    { n: 1, label: "Замовлення" },
+    { n: 2, label: "Доставка і оплата" },
+  ];
+
+  return (
+    <ol className="mt-6 flex flex-wrap items-center gap-3 sm:gap-5">
+      {items.map((item, i) => {
+        const active = step === item.n;
+        const done = step > item.n;
+        return (
+          <li key={item.n} className="flex items-center gap-3 sm:gap-5">
+            {i > 0 && (
+              <span className="hidden h-px w-8 bg-line sm:block" aria-hidden />
+            )}
+            <button
+              type="button"
+              onClick={() => done && onStep(item.n)}
+              className={`flex items-center gap-2.5 text-sm font-semibold transition-colors ${
+                active || done ? "text-ink" : "text-mute"
+              } ${done ? "cursor-pointer" : "cursor-default"}`}
+            >
+              <span
+                className={`grid h-8 w-8 place-items-center rounded-full text-xs font-semibold ${
+                  active
+                    ? "bg-sale text-white"
+                    : done
+                      ? "bg-ink text-white"
+                      : "bg-ph text-mute"
+                }`}
+              >
+                {done ? "✓" : item.n}
+              </span>
+              <span className="hidden sm:inline">{item.label}</span>
+              <span className="sm:hidden">{item.n === 1 ? "Замовлення" : "Доставка"}</span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function Choice({
+  active,
   title,
   hint,
-  defaultChecked,
+  onClick,
 }: {
-  name: string;
-  value: string;
+  active: boolean;
   title: string;
   hint: string;
-  defaultChecked?: boolean;
+  onClick: () => void;
 }) {
   return (
-    <label className="flex cursor-pointer gap-3 rounded-2xl border border-line p-4 has-[:checked]:border-ink">
-      <input
-        type="radio"
-        name={name}
-        value={value}
-        defaultChecked={defaultChecked}
-        className="mt-1 accent-ink"
-      />
-      <span>
-        {title}
-        <small className="mt-1 block text-sm font-medium text-mute">{hint}</small>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition-colors ${
+        active
+          ? "border-sale bg-sale-soft/60 ring-1 ring-sale/25"
+          : "border-line bg-white hover:border-black/20"
+      }`}
+    >
+      <span
+        className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 ${
+          active ? "border-sale" : "border-black/20"
+        }`}
+        aria-hidden
+      >
+        {active && <span className="h-2.5 w-2.5 rounded-full bg-sale" />}
       </span>
-    </label>
+      <span>
+        <span className="block text-sm font-semibold text-ink">{title}</span>
+        <span className="mt-0.5 block text-xs text-mute">{hint}</span>
+      </span>
+    </button>
   );
 }

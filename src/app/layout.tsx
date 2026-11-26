@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Montserrat } from "next/font/google";
 import { CatalogProvider } from "@/components/CatalogProvider";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { ScrollRestoration } from "@/components/ScrollRestoration";
 import { ShopProvider } from "@/components/ShopProvider";
 import { Toast } from "@/components/Toast";
 import "./globals.css";
@@ -45,6 +47,9 @@ export default function RootLayout({
       <body className={`${montserrat.className} min-h-screen bg-white`}>
         <CatalogProvider>
           <ShopProvider>
+            <Suspense fallback={null}>
+              <ScrollRestoration />
+            </Suspense>
             <Header />
             <main>{children}</main>
             <Footer />

@@ -19,8 +19,9 @@ const SearchSidebar = dynamic(
 const NAV = [
   { href: "/catalog", label: "Каталог" },
   { href: "/catalog?sort=new", label: "Новинки" },
-  { href: "/catalog?sale=1", label: "Знижки" },
-  { href: "/favorites", label: "Обране" },
+  { href: "/promotional-offers", label: "Акції" },
+  { href: "/delivery", label: "Доставка" },
+  { href: "/payment", label: "Оплата" },
 ];
 
 const iconBtn =
@@ -40,10 +41,11 @@ export function Header() {
   }, [searchOpen]);
 
   function navClass(href: string) {
+    const path = href.split("?")[0];
     const on =
-      href === "/catalog"
+      path === "/catalog"
         ? pathname === "/catalog" || pathname.startsWith("/product")
-        : pathname === href;
+        : pathname === path;
     return on
       ? "border-b border-sale text-sale"
       : "border-b border-transparent text-ink hover:border-sale/50 hover:text-sale";
@@ -71,7 +73,7 @@ export function Header() {
         <Container className="px-3 sm:px-10 lg:px-14">
           <div className="grid h-16 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1 sm:h-[4.5rem] sm:gap-3 md:h-[5.75rem] md:grid-cols-[1fr_auto_1fr] md:gap-5">
             <div className="flex min-w-0 items-center justify-start">
-              <nav className="hidden items-center gap-10 md:flex">
+              <nav className="hidden items-center gap-5 lg:gap-8 xl:gap-10 md:flex">
                 {NAV.map((item) => (
                   <Link
                     key={item.label}
@@ -81,12 +83,8 @@ export function Header() {
                         e.preventDefault();
                         goCatalog({ sort: "new" });
                       }
-                      if (item.href === "/catalog?sale=1") {
-                        e.preventDefault();
-                        goCatalog({ sale: true, sort: "disc" });
-                      }
                     }}
-                    className={`pb-1.5 text-[0.75rem] font-medium uppercase tracking-caps transition-colors ${navClass(item.href.split("?")[0])}`}
+                    className={`pb-1.5 text-[0.7rem] font-medium uppercase tracking-caps transition-colors xl:text-[0.75rem] ${navClass(item.href)}`}
                   >
                     {item.label}
                   </Link>

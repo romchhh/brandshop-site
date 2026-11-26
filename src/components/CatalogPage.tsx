@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -17,6 +17,31 @@ import { ProductCard } from "./ProductCard";
 import { Button, Container } from "./ui";
 
 const PER = 24;
+const CATALOG_VIEW_KEY = "bs_catalog_view";
+
+type CatalogViewState = {
+  query: string;
+  page: number;
+  y: number;
+};
+
+function readCatalogView(): CatalogViewState | null {
+  try {
+    const raw = sessionStorage.getItem(CATALOG_VIEW_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as CatalogViewState;
+  } catch {
+    return null;
+  }
+}
+
+function writeCatalogView(state: CatalogViewState) {
+  try {
+    sessionStorage.setItem(CATALOG_VIEW_KEY, JSON.stringify(state));
+  } catch {
+    /* private mode */
+  }
+}
 
 function FilterIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
@@ -38,11 +63,20 @@ function FilterIcon({ className = "h-4 w-4" }: { className?: string }) {
 
 export function CatalogPage() {
   const searchParams = useSearchParams();
+  const queryKey = searchParams.toString();
   const { products, categories, minPrice, maxPrice } = useCatalog();
   const { filters, setFilters, resetFilters } = useShop();
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(() => {
+    const saved = readCatalogView();
+    if (saved && saved.query === queryKey && saved.page > 1) {
+      return saved.page;
+    }
+    return 1;
+  });
   const [drawer, setDrawer] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const skipPageResetRef = useRef(true);
+  const scrollRestoredRef = useRef(false);
 
   useEffect(() => {
     const next = defaultFilters(minPrice, maxPrice);
@@ -57,7 +91,6 @@ export function CatalogPage() {
     const q = searchParams.get("q");
     if (q) next.query = q;
     setFilters(next);
-    setPage(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, minPrice, maxPrice]);
 
@@ -74,8 +107,44 @@ export function CatalogPage() {
   const hasMore = shown.length < list.length;
 
   useEffect(() => {
+    if (skipPageResetRef.current) {
+      skipPageResetRef.current = false;
+      const saved = readCatalogView();
+      if (saved && saved.query === queryKey && saved.page > 1) {
+        setPage(saved.page);
+        return;
+      }
+      return;
+    }
     setPage(1);
-  }, [filters]);
+    scrollRestoredRef.current = false;
+  }, [filters, queryKey]);
+
+  useEffect(() => {
+    const save = () => {
+      writeCatalogView({ query: queryKey, page, y: window.scrollY });
+    };
+    window.addEventListener("pagehide", save);
+    return () => {
+      save();
+      window.removeEventListener("pagehide", save);
+    };
+  }, [page, queryKey]);
+
+  useLayoutEffect(() => {
+    if (scrollRestoredRef.current || !list.length) return;
+    const saved = readCatalogView();
+    if (!saved || saved.query !== queryKey || saved.y <= 0) return;
+    if (page < saved.page) {
+      setPage(saved.page);
+      return;
+    }
+    if (shown.length < Math.min(list.length, saved.page * PER) && hasMore) {
+      return;
+    }
+    scrollRestoredRef.current = true;
+    window.scrollTo({ top: saved.y, left: 0, behavior: "auto" });
+  }, [queryKey, page, shown.length, list.length, hasMore]);
 
   useEffect(() => {
     const node = loadMoreRef.current;

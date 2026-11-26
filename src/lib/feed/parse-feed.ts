@@ -1,9 +1,9 @@
 import {
   detectBrand,
   detectColors,
-  ONE_SIZE,
   type Product,
 } from "@/lib/catalog";
+import { parseProductSizes } from "./sizes";
 
 export type ParsedFeed = {
   generatedAt: string | null;
@@ -27,16 +27,11 @@ function parsePrice(raw: string): number {
   return Number.isFinite(n) ? Math.round(n) : 0;
 }
 
-function photoFields(photoUrl: string, article: string): {
+function photoFields(photoUrl: string): {
   imageUrl: string;
   photoSuffix: string;
-} {
-  if (!photoUrl) {
-    return {
-      imageUrl: `https://brandshop.in.ua/media/product_photos/${encodeURIComponent(article)}_main.jpg`,
-      photoSuffix: "",
-    };
-  }
+} | null {
+  if (!photoUrl.trim()) return null;
   let decoded = photoUrl;
   try {
     decoded = decodeURIComponent(photoUrl);
@@ -52,13 +47,13 @@ function photoFields(photoUrl: string, article: string): {
 
 function parseSizes(block: string): string[] {
   const props = block.match(/<property\b[^>]*>[\s\S]*?<\/property>/g) ?? [];
-  const sizes: string[] = [];
+  const titles: string[] = [];
   for (const prop of props) {
     if (attr(prop, "active") === "false") continue;
     const title = tagText(prop, "title");
-    if (title) sizes.push(title);
+    if (title) titles.push(title);
   }
-  return sizes.length ? sizes : [ONE_SIZE];
+  return parseProductSizes(titles);
 }
 
 /**
@@ -99,10 +94,10 @@ export function parseFeedXml(xml: string): ParsedFeed {
     const priceSite = parsePrice(tagText(block, "price_site")) || priceTable;
     if (!priceSite) continue;
 
-    const { imageUrl, photoSuffix } = photoFields(
-      tagText(block, "photo"),
-      article,
-    );
+    const photo = photoFields(tagText(block, "photo"));
+    // Skip items without a real photo — invented URLs only 404 in the UI.
+    if (!photo) continue;
+
     const sizes = parseSizes(block);
     const brand = detectBrand(title);
 
@@ -111,8 +106,8 @@ export function parseFeedXml(xml: string): ParsedFeed {
       title,
       categoryId,
       article,
-      photoSuffix,
-      imageUrl,
+      photoSuffix: photo.photoSuffix,
+      imageUrl: photo.imageUrl,
       priceTable: priceTable || priceSite,
       priceSite,
       sizes,

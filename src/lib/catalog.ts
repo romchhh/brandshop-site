@@ -1,3 +1,4 @@
+import { PROMO_EXCLUDED_CATEGORY_IDS } from "./site";
 import { RAW_PRODUCTS } from "./raw-products";
 
 export const IMAGE_BASE =
@@ -332,51 +333,41 @@ export function sortProducts(list: Product[], sort: CatalogFilters["sort"]) {
   return a;
 }
 
-export function homeNewItems(products: Product[]): Product[] {
-  const byCat: Record<number, Product[]> = {};
-  [...products]
-    .sort((a, b) => b.id - a.id)
-    .forEach((p) => {
-      (byCat[p.categoryId] ||= []).push(p);
-    });
-  const keys = Object.keys(byCat).sort(
-    (a, b) => byCat[+b][0].id - byCat[+a][0].id,
-  );
-  const out: Product[] = [];
-  let i = 0;
-  while (out.length < 8 && i < 6) {
-    keys.forEach((k) => {
-      if (byCat[+k][i] && out.length < 8) out.push(byCat[+k][i]);
-    });
-    i++;
-  }
-  return out;
+/** Як у give-me HomeFeed: новинки = найновіші за id. */
+export function homeNewItems(products: Product[], limit = 4): Product[] {
+  return [...products].sort((a, b) => b.id - a.id).slice(0, limit);
 }
 
-export function homeHits(products: Product[]): Product[] {
-  const top = [
-    "Stone Island",
-    "Chrome Hearts",
-    "Prada",
-    "Stefano Ricci",
-    "Brunello Cucinelli",
-    "Dolce & Gabbana",
-    "Louis Vuitton",
-  ];
+/**
+ * Акційні пропозиції: товари зі знижкою, без аксесуарів
+ * (як promotional_products у give-me).
+ */
+export function homeSaleItems(products: Product[], limit = 4): Product[] {
   return products
-    .filter((p) => top.includes(p.brand) && p.priceSite >= 2400)
-    .sort((a, b) => ((a.id * 7919) % 101) - ((b.id * 7919) % 101))
-    .slice(0, 8);
-}
-
-export function homeSaleItems(products: Product[]): Product[] {
-  return products
-    .filter((p) => p.sale)
-    .sort(
-      (a, b) =>
-        1 - b.priceSite / b.priceTable - (1 - a.priceSite / a.priceTable),
+    .filter(
+      (p) => p.sale && !PROMO_EXCLUDED_CATEGORY_IDS.has(p.categoryId),
     )
-    .slice(0, 8);
+    .sort((a, b) => b.id - a.id)
+    .slice(0, limit);
+}
+
+/** Стрічка «Всі товари» на головній. */
+export function homeAllItems(products: Product[], limit = 12): Product[] {
+  return [...products].sort((a, b) => b.id - a.id).slice(0, limit);
+}
+
+/** @deprecated give-me не має «хітів» — alias на новинки. */
+export function homeHits(products: Product[]): Product[] {
+  return homeNewItems(products, 8);
+}
+
+/** Повний список акцій для /promotional-offers */
+export function promotionalProducts(products: Product[]): Product[] {
+  return products
+    .filter(
+      (p) => p.sale && !PROMO_EXCLUDED_CATEGORY_IDS.has(p.categoryId),
+    )
+    .sort((a, b) => b.id - a.id);
 }
 
 export function mergeCategories(

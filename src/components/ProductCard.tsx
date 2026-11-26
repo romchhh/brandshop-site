@@ -41,7 +41,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <Link
       href={`/product/${product.id}`}
-      scroll
+      scroll={false}
       className={productCardRootClass()}
     >
       <div

@@ -10,8 +10,9 @@
   --color-sale-deep: #6e2229;
 }
 
+/* Instant scroll — smooth on html causes “to top then down” on back navigation */
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 body {
