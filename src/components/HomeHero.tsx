@@ -14,6 +14,7 @@ import {
 import {
   defaultFilters,
   formatMoney,
+  homeHeroItems,
   productImageUrl,
   type Product,
 } from "@/lib/catalog";
@@ -23,47 +24,12 @@ import { useCatalog } from "./CatalogProvider";
 import { useShop } from "./ShopProvider";
 import { Button, Container, TextLink } from "./ui";
 
-const SEED_IDS = [716, 2222, 389, 2219, 2359, 2053, 490, 2454];
 const ROTATE_MS = 4500;
 const SWIPE_THRESHOLD = 40;
 const GAP_PX = 12;
 const MOBILE_GAP_PX = 10;
 const MOBILE_CARD_RATIO = 0.64;
-
-function buildHeroPool(
-  productsById: Record<number, Product>,
-  products: Product[],
-): Product[] {
-  const seen = new Set<number>();
-  const pool: Product[] = [];
-
-  for (const id of SEED_IDS) {
-    const p = productsById[id];
-    if (p && !seen.has(p.id)) {
-      pool.push(p);
-      seen.add(p.id);
-    }
-  }
-
-  for (const p of products) {
-    if (pool.length >= 12) break;
-    if (seen.has(p.id)) continue;
-    if (![27, 26, 1, 18, 16, 22, 28].includes(p.categoryId)) continue;
-    pool.push(p);
-    seen.add(p.id);
-  }
-
-  if (pool.length < 3) {
-    for (const p of products) {
-      if (pool.length >= 3) break;
-      if (seen.has(p.id)) continue;
-      pool.push(p);
-      seen.add(p.id);
-    }
-  }
-
-  return pool;
-}
+const HERO_LIMIT = 12;
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(false);
@@ -195,7 +161,14 @@ function visibleTriple(pool: Product[], index: number) {
 
 export function HomeHero() {
   const router = useRouter();
-  const { products, productsById, minPrice, maxPrice, ready } = useCatalog();
+  const {
+    products,
+    minPrice,
+    maxPrice,
+    ready,
+    categoryRank,
+    heroProductIds,
+  } = useCatalog();
   const { resetFilters, setFilters } = useShop();
   const isMobile = useIsMobile();
   const [index, setIndex] = useState(0);
@@ -216,8 +189,8 @@ export function HomeHero() {
   const suppressClickRef = useRef(false);
 
   const pool = useMemo(
-    () => buildHeroPool(productsById, products),
-    [productsById, products],
+    () => homeHeroItems(products, HERO_LIMIT, categoryRank, heroProductIds),
+    [products, categoryRank, heroProductIds],
   );
 
   const loading = !ready && pool.length === 0;

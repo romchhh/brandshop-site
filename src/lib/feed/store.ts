@@ -9,6 +9,8 @@ import type { AdminSettings } from "@/lib/admin/settings";
 import { readAdminSettings } from "@/lib/admin/settings";
 import { SYNC_INTERVAL_MS } from "./config";
 import { sanitizeStoredSizes } from "./sizes";
+import { beginSyncRecord, finishSyncRecord } from "./sync-log";
+import type { SyncTrigger } from "./sync-types";
 import {
   readSnapshotFromDisk,
   seedSnapshot,
@@ -73,11 +75,14 @@ function invalidatePublic() {
 
 export function toPublic(
   snapshot: CatalogSnapshot,
-  settings?: Pick<AdminSettings, "groupOrder" | "hiddenProductIds" | "updatedAt">,
+  settings?: Pick<
+    AdminSettings,
+    "groupOrder" | "hiddenProductIds" | "heroProductIds" | "updatedAt"
+  >,
 ): CatalogPublic {
   const s = state();
   const settingsKey = settings
-    ? `${settings.updatedAt}:${settings.hiddenProductIds.length}:${settings.groupOrder.join(",")}`
+    ? `${settings.updatedAt}:${settings.hiddenProductIds.length}:${settings.heroProductIds?.join(",") ?? ""}:${settings.groupOrder.join(",")}`
     : "default";
   const key = `${snapshot.syncedAt}:${snapshot.productCount}:${settingsKey}`;
   if (s.publicView && s.publicKey === key) return s.publicView;
@@ -101,6 +106,7 @@ export function toPublic(
       ? settings.groupOrder
       : CATEGORY_GROUPS.map((g) => g.id),
     hiddenProductIds: settings?.hiddenProductIds ?? [],
+    heroProductIds: settings?.heroProductIds ?? [],
   };
   s.publicView = view;
   s.publicKey = key;
@@ -128,31 +134,51 @@ async function loadDiskOnce() {
   }
 }
 
-function runSync(): Promise<CatalogSnapshot> {
+export function isSyncRunning() {
+  return Boolean(state().syncing);
+}
+
+function runSync(trigger: SyncTrigger = "background"): Promise<CatalogSnapshot> {
   const s = state();
   if (s.syncing) return s.syncing;
 
-  const job = syncCatalog()
-    .then((snapshot) => {
+  const job = (async () => {
+    const record = await beginSyncRecord(trigger);
+    try {
+      const snapshot = await syncCatalog();
       s.snapshot = snapshot;
       invalidatePublic();
+      await finishSyncRecord(record.id, {
+        ok: true,
+        productCount: snapshot.productCount,
+        durationMs: snapshot.durationMs,
+        feedGeneratedAt: snapshot.feedGeneratedAt,
+      });
       return snapshot;
-    })
-    .finally(() => {
-      if (s.syncing === job) s.syncing = null;
-    });
+    } catch (err) {
+      await finishSyncRecord(record.id, {
+        ok: false,
+        error: err instanceof Error ? err.message : "Sync failed",
+      });
+      throw err;
+    }
+  })().finally(() => {
+    if (s.syncing === job) s.syncing = null;
+  });
 
   s.syncing = job;
   return job;
 }
 
 /** Non-blocking refresh when data is older than 3h. No-op on serverless. */
-export function refreshCatalogInBackground() {
+export function refreshCatalogInBackground(
+  trigger: SyncTrigger = "background",
+) {
   if (isProductionBuild() || isServerless()) return;
   const s = state();
   if (s.syncing) return;
   if (s.snapshot && isFresh(s.snapshot) && !isSeed(s.snapshot)) return;
-  void runSync().catch((err) => {
+  void runSync(trigger).catch((err) => {
     console.error("[catalog] background sync failed:", err);
   });
 }
@@ -163,14 +189,17 @@ export function refreshCatalogInBackground() {
  */
 export async function getCatalogSnapshot(options?: {
   force?: boolean;
+  trigger?: SyncTrigger;
 }): Promise<CatalogSnapshot> {
   const s = state();
   await loadDiskOnce();
 
   if (options?.force) {
     try {
-      return await runSync();
+      return await runSync(options.trigger ?? "manual");
     } catch (err) {
+      // Manual sync must fail loudly; cron/background may keep stale catalog.
+      if (options.trigger === "manual") throw err;
       if (s.snapshot) return s.snapshot;
       throw err;
     }
@@ -187,7 +216,7 @@ export async function getCatalogSnapshot(options?: {
     !isServerless() &&
     (isSeed(s.snapshot) || !isFresh(s.snapshot))
   ) {
-    refreshCatalogInBackground();
+    refreshCatalogInBackground("background");
   }
 
   return s.snapshot;
@@ -195,6 +224,7 @@ export async function getCatalogSnapshot(options?: {
 
 export async function getCatalogPublic(options?: {
   force?: boolean;
+  trigger?: SyncTrigger;
 }): Promise<CatalogPublic> {
   const [snapshot, settings] = await Promise.all([
     getCatalogSnapshot(options),
@@ -206,6 +236,7 @@ export async function getCatalogPublic(options?: {
       ? {
           groupOrder: settings.groupOrder,
           hiddenProductIds: settings.hiddenProductIds,
+          heroProductIds: settings.heroProductIds,
           updatedAt: settings.updatedAt,
         }
       : undefined,

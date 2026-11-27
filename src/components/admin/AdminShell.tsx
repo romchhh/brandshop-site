@@ -33,6 +33,20 @@ const NAV = [
     ),
   },
   {
+    href: "/admin/hero",
+    label: "Hero / головна",
+    icon: (
+      <path
+        d="M4 7.5A1.5 1.5 0 0 1 5.5 6h13A1.5 1.5 0 0 1 20 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5v-9zM8 17.5V20M16 17.5V20M9 11.5l2 2 4-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    ),
+  },
+  {
     href: "/admin/products",
     label: "Товари",
     icon: (
@@ -88,6 +102,20 @@ const NAV = [
         fill="none"
         stroke="currentColor"
         strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    ),
+  },
+  {
+    href: "/admin/sync",
+    label: "Синхронізація",
+    icon: (
+      <path
+        d="M4 12a8 8 0 0 1 14.3-4.9M20 12a8 8 0 0 1-14.3 4.9M16 3v4h4M8 21v-4H4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
     ),

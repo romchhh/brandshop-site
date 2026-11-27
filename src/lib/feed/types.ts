@@ -21,4 +21,6 @@ export type CatalogPublic = {
   /** Category group ids order for novinki / rails. */
   groupOrder: string[];
   hiddenProductIds: number[];
+  /** Home hero product ids (admin). Empty = auto novinki. */
+  heroProductIds: number[];
 };

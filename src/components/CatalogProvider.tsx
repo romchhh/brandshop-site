@@ -32,11 +32,12 @@ type CatalogContextValue = {
   categoryGroups: CategoryGroup[];
   categoryRank: Map<number, number>;
   newProductIds: Set<number>;
+  heroProductIds: number[];
 };
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
 
-const CACHE_KEY = "bs_catalog_v3";
+const CACHE_KEY = "bs_catalog_v4";
 
 const emptyValue: CatalogContextValue = {
   products: [],
@@ -52,6 +53,7 @@ const emptyValue: CatalogContextValue = {
   categoryGroups: orderCategoryGroups(),
   categoryRank: categoryRankMap(orderCategoryGroups()),
   newProductIds: new Set(),
+  heroProductIds: [],
 };
 
 function fromPublic(data: CatalogPublic): CatalogContextValue {
@@ -71,6 +73,7 @@ function fromPublic(data: CatalogPublic): CatalogContextValue {
     categoryGroups: groups,
     categoryRank,
     newProductIds: newProductIdSet(data.products, 48, categoryRank),
+    heroProductIds: data.heroProductIds ?? [],
   };
 }
 

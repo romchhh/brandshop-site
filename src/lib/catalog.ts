@@ -418,6 +418,43 @@ export function homeNewItems(
   return sorted.slice(0, limit);
 }
 
+/**
+ * Hero на головній: ручний список з адмінки, інакше — новинки.
+ * Якщо ручних менше за `minManual`, добираємо з новинок.
+ */
+export function homeHeroItems(
+  products: Product[],
+  limit = 12,
+  rank?: Map<number, number>,
+  heroIds?: number[],
+): Product[] {
+  if (!products.length) return [];
+  const byId = indexById(products);
+  const picked: Product[] = [];
+  const seen = new Set<number>();
+
+  if (heroIds?.length) {
+    for (const id of heroIds) {
+      if (picked.length >= limit) break;
+      const p = byId[id];
+      if (!p || seen.has(p.id)) continue;
+      picked.push(p);
+      seen.add(p.id);
+    }
+  }
+
+  if (picked.length < Math.min(3, limit) || !heroIds?.length) {
+    for (const p of homeNewItems(products, limit, rank)) {
+      if (picked.length >= limit) break;
+      if (seen.has(p.id)) continue;
+      picked.push(p);
+      seen.add(p.id);
+    }
+  }
+
+  return picked.slice(0, limit);
+}
+
 /** Id новинок (той самий порядок, що й «Новинки») — для бейджа NEW. */
 export function newProductIdSet(
   products: Product[],

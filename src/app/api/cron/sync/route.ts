@@ -24,7 +24,7 @@ async function handle(req: NextRequest) {
   }
 
   try {
-    const catalog = await getCatalogPublic({ force: true });
+    const catalog = await getCatalogPublic({ force: true, trigger: "cron" });
     return NextResponse.json({
       ok: true,
       productCount: catalog.productCount,

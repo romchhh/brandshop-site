@@ -12,6 +12,15 @@ export async function GET(req: NextRequest) {
   if (denied) return denied;
 
   const q = (req.nextUrl.searchParams.get("q") ?? "").trim().toLowerCase();
+  const idsParam = (req.nextUrl.searchParams.get("ids") ?? "").trim();
+  const idFilter = idsParam
+    ? new Set(
+        idsParam
+          .split(",")
+          .map(Number)
+          .filter((n) => Number.isFinite(n) && n > 0),
+      )
+    : null;
   const limit = Math.min(
     100,
     Math.max(1, Number(req.nextUrl.searchParams.get("limit") ?? 60) || 60),
@@ -24,7 +33,9 @@ export async function GET(req: NextRequest) {
   const hidden = new Set(settings.hiddenProductIds);
 
   let products = snapshot.products;
-  if (q) {
+  if (idFilter?.size) {
+    products = products.filter((p) => idFilter.has(p.id));
+  } else if (q) {
     products = products.filter((p) => {
       const hay = `${p.id} ${p.title} ${p.article} ${p.brand}`.toLowerCase();
       return hay.includes(q);

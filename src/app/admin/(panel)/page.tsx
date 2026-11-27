@@ -210,10 +210,10 @@ export default function AdminDashboardPage() {
                 {syncing ? "Завантаження…" : "Синхронізувати"}
               </AdminBtn>
               <Link
-                href="/admin/promos"
+                href="/admin/sync"
                 className="inline-flex h-10 items-center justify-center rounded-2xl border border-black/10 bg-white px-4 text-sm font-semibold text-ink transition hover:border-sale hover:text-sale"
               >
-                Промокоди
+                Статус / історія
               </Link>
             </div>
             {stats ? (

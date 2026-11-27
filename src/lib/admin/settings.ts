@@ -10,6 +10,8 @@ export type AdminSettings = {
   groupOrder: string[];
   /** Soft-hidden product ids (still in feed, not shown in storefront). */
   hiddenProductIds: number[];
+  /** Ordered product ids for home hero. Empty = auto from novinki. */
+  heroProductIds: number[];
   /** Promo codes managed in admin. */
   promoCodes: PromoCode[];
   updatedAt: string;
@@ -18,6 +20,7 @@ export type AdminSettings = {
 const DEFAULT: AdminSettings = {
   groupOrder: CATEGORY_GROUPS.map((g) => g.id),
   hiddenProductIds: [],
+  heroProductIds: [],
   promoCodes: defaultPromoCodes(),
   updatedAt: new Date(0).toISOString(),
 };
@@ -33,9 +36,22 @@ export function defaultAdminSettings(): AdminSettings {
   return {
     groupOrder: [...DEFAULT.groupOrder],
     hiddenProductIds: [],
+    heroProductIds: [],
     promoCodes: defaultPromoCodes(),
     updatedAt: new Date().toISOString(),
   };
+}
+
+function normalizeIdList(raw: unknown, max = 24): number[] {
+  if (!Array.isArray(raw)) return [];
+  return [
+    ...new Set(
+      raw
+        .map(Number)
+        .filter((n) => Number.isFinite(n) && n > 0)
+        .map((n) => Math.trunc(n)),
+    ),
+  ].slice(0, max);
 }
 
 function normalize(raw: Partial<AdminSettings> | null): AdminSettings {
@@ -52,15 +68,8 @@ function normalize(raw: Partial<AdminSettings> | null): AdminSettings {
   for (const id of base.groupOrder) {
     if (!uniqueOrder.includes(id)) uniqueOrder.push(id);
   }
-  const hidden = Array.isArray(raw.hiddenProductIds)
-    ? [
-        ...new Set(
-          raw.hiddenProductIds
-            .map(Number)
-            .filter((n) => Number.isFinite(n) && n > 0),
-        ),
-      ]
-    : [];
+  const hidden = normalizeIdList(raw.hiddenProductIds, 5000);
+  const heroProductIds = normalizeIdList(raw.heroProductIds, 24);
 
   // If file has no promoCodes key yet — seed defaults; empty array means "cleared"
   const promoCodes =
@@ -71,6 +80,7 @@ function normalize(raw: Partial<AdminSettings> | null): AdminSettings {
   return {
     groupOrder: uniqueOrder,
     hiddenProductIds: hidden,
+    heroProductIds,
     promoCodes,
     updatedAt:
       typeof raw.updatedAt === "string" ? raw.updatedAt : base.updatedAt,

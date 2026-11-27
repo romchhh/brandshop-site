@@ -1,12 +1,40 @@
 import { SYNC_INTERVAL_MS } from "./config";
 import { getCatalogSnapshot, refreshCatalogInBackground } from "./store";
 
+type SchedulerSlot = {
+  started: boolean;
+  timer?: NodeJS.Timeout;
+  startedAt?: string;
+  lastTickAt?: string | null;
+  nextRunAt?: string | null;
+};
+
 const g = globalThis as typeof globalThis & {
-  __brandshopCatalogScheduler?: { started: boolean; timer?: NodeJS.Timeout };
+  __brandshopCatalogScheduler?: SchedulerSlot;
 };
 
 function isServerless() {
   return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
+function slot(): SchedulerSlot {
+  return (g.__brandshopCatalogScheduler ??= {
+    started: false,
+    lastTickAt: null,
+    nextRunAt: null,
+  });
+}
+
+export function getSchedulerStatus() {
+  const s = slot();
+  return {
+    started: s.started,
+    skippedServerless: isServerless(),
+    intervalMs: SYNC_INTERVAL_MS,
+    startedAt: s.startedAt ?? null,
+    lastTickAt: s.lastTickAt ?? null,
+    nextRunAt: s.nextRunAt ?? null,
+  };
 }
 
 /**
@@ -19,9 +47,11 @@ export function startCatalogScheduler() {
     return;
   }
 
-  const slot = (g.__brandshopCatalogScheduler ??= { started: false });
-  if (slot.started) return;
-  slot.started = true;
+  const s = slot();
+  if (s.started) return;
+  s.started = true;
+  s.startedAt = new Date().toISOString();
+  s.nextRunAt = new Date(Date.now() + SYNC_INTERVAL_MS).toISOString();
 
   void getCatalogSnapshot()
     .then((snap) => {
@@ -31,9 +61,11 @@ export function startCatalogScheduler() {
     })
     .catch((err) => console.error("[catalog] boot sync failed:", err));
 
-  slot.timer = setInterval(() => {
-    refreshCatalogInBackground();
+  s.timer = setInterval(() => {
+    s.lastTickAt = new Date().toISOString();
+    s.nextRunAt = new Date(Date.now() + SYNC_INTERVAL_MS).toISOString();
+    refreshCatalogInBackground("scheduler");
   }, SYNC_INTERVAL_MS);
 
-  slot.timer.unref?.();
+  s.timer.unref?.();
 }

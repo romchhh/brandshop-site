@@ -30,6 +30,7 @@ export async function PUT(req: NextRequest) {
   let body: {
     groupOrder?: string[];
     hiddenProductIds?: number[];
+    heroProductIds?: number[];
     promoCodes?: unknown;
   };
   try {
@@ -41,6 +42,9 @@ export async function PUT(req: NextRequest) {
   const settings = await writeAdminSettings({
     ...(body.groupOrder ? { groupOrder: body.groupOrder } : {}),
     ...(body.hiddenProductIds ? { hiddenProductIds: body.hiddenProductIds } : {}),
+    ...(body.heroProductIds !== undefined
+      ? { heroProductIds: body.heroProductIds }
+      : {}),
     ...(body.promoCodes !== undefined
       ? { promoCodes: normalizePromoList(body.promoCodes) }
       : {}),
