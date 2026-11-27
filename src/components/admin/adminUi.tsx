@@ -134,7 +134,7 @@ export function AdminBtn({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-45 ${variants[variant]} ${className}`}
+      className={`inline-flex h-10 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-45 ${variants[variant]} ${className}`}
     >
       {children}
     </button>
@@ -166,7 +166,7 @@ export function AdminInput({
       placeholder={placeholder}
       autoFocus={autoFocus}
       required={required}
-      className={`h-11 w-full rounded-xl border border-black/10 bg-white px-3.5 text-sm outline-none transition focus:border-sale focus:ring-2 focus:ring-sale/15 ${className}`}
+      className={`h-11 w-full rounded-2xl border border-black/10 bg-white px-3.5 text-sm outline-none transition focus:border-sale focus:ring-2 focus:ring-sale/15 ${className}`}
     />
   );
 }

@@ -120,7 +120,7 @@ export default function AdminProductsPage() {
               key={key}
               type="button"
               onClick={() => setFilter(key)}
-              className={`h-9 rounded-full px-3.5 text-xs font-semibold transition ${
+              className={`h-9 rounded-2xl px-3.5 text-xs font-semibold transition ${
                 filter === key
                   ? "bg-ink text-white"
                   : "bg-white text-mute ring-1 ring-black/10 hover:text-ink"

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 const SCROLL_PREFIX = "bs_scroll:";
+const CATALOG_VIEW_KEY = "bs_catalog_view";
 
 function storageKey(pathname: string, search: string) {
   return `${SCROLL_PREFIX}${pathname}${search ? `?${search}` : ""}`;
@@ -15,6 +16,17 @@ function scrollInstant(top: number) {
   html.style.scrollBehavior = "auto";
   window.scrollTo({ top, left: 0, behavior: "auto" });
   html.style.scrollBehavior = prev;
+}
+
+function readCatalogY(): number {
+  try {
+    const raw = sessionStorage.getItem(CATALOG_VIEW_KEY);
+    if (!raw) return 0;
+    const saved = JSON.parse(raw) as { y?: number };
+    return typeof saved.y === "number" && saved.y > 0 ? saved.y : 0;
+  } catch {
+    return 0;
+  }
 }
 
 /**
@@ -42,10 +54,11 @@ export function ScrollRestoration() {
 
   useEffect(() => {
     keyRef.current = key;
+    const leavingCatalog = pathname.startsWith("/catalog");
 
-    const save = () => {
+    const save = (y = window.scrollY) => {
       try {
-        sessionStorage.setItem(keyRef.current, String(window.scrollY));
+        sessionStorage.setItem(keyRef.current, String(y));
       } catch {
         /* private mode */
       }
@@ -54,16 +67,17 @@ export function ScrollRestoration() {
     let raf = 0;
     const onScrollRaf = () => {
       cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(save);
+      raf = requestAnimationFrame(() => save());
     };
+    const onPageHide = () => save();
 
     window.addEventListener("scroll", onScrollRaf, { passive: true });
-    window.addEventListener("pagehide", save);
+    window.addEventListener("pagehide", onPageHide);
 
     const isPop = isPopRef.current;
     isPopRef.current = false;
 
-    let timeoutId = 0;
+    const timers: number[] = [];
 
     if (isPop) {
       let y = 0;
@@ -72,22 +86,31 @@ export function ScrollRestoration() {
       } catch {
         y = 0;
       }
-      // Catalog expands list after mount — restore again once layout catches up.
-      scrollInstant(y);
-      requestAnimationFrame(() => scrollInstant(y));
-      timeoutId = window.setTimeout(() => scrollInstant(y), 80);
+      if (pathname.startsWith("/catalog")) {
+        y = Math.max(y, readCatalogY());
+      }
+      const apply = () => scrollInstant(y);
+      apply();
+      requestAnimationFrame(apply);
+      for (const ms of [80, 200, 400, 700]) {
+        timers.push(window.setTimeout(apply, ms));
+      }
     } else {
       scrollInstant(0);
     }
 
     return () => {
-      if (timeoutId) window.clearTimeout(timeoutId);
+      for (const id of timers) window.clearTimeout(id);
       cancelAnimationFrame(raf);
-      save();
+      const y = window.scrollY;
+      // Після scroll-to-top на товарній сторінці не затираємо позицію каталогу нулем.
+      if (y > 0 || !leavingCatalog) {
+        save(y);
+      }
       window.removeEventListener("scroll", onScrollRaf);
-      window.removeEventListener("pagehide", save);
+      window.removeEventListener("pagehide", onPageHide);
     };
-  }, [key]);
+  }, [key, pathname]);
 
   return null;
 }

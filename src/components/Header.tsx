@@ -259,14 +259,14 @@ export function Header() {
                         <div className="pb-3">
                           <button
                             type="button"
-                            className="mb-1 block w-full rounded-xl px-2 py-2.5 text-left text-[0.8125rem] text-mute transition hover:bg-ph hover:text-sale"
+                            className="mb-1 block w-full rounded-2xl px-2 py-2.5 text-left text-[0.8125rem] text-mute transition hover:bg-ph hover:text-sale"
                             onClick={() => goCatalog()}
                           >
                             Усі товари
                           </button>
                           <Link
                             href="/categories"
-                            className="mb-2 block w-full rounded-xl px-2 py-2.5 text-left text-[0.8125rem] font-medium text-sale"
+                            className="mb-2 block w-full rounded-2xl px-2 py-2.5 text-left text-[0.8125rem] font-medium text-sale"
                             onClick={() => setMenuOpen(false)}
                           >
                             Усі категорії →
@@ -276,7 +276,7 @@ export function Header() {
                               <li key={g.id}>
                                 <button
                                   type="button"
-                                  className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white"
+                                  className="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left transition hover:bg-white"
                                   onClick={() =>
                                     goCatalog(
                                       { categories: g.categoryIds },

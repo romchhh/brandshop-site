@@ -43,6 +43,22 @@ function writeCatalogView(state: CatalogViewState) {
   }
 }
 
+/** Зберігає скрол; при y=0 не затирає попередню позицію (гонка зі scroll-to-top). */
+function persistCatalogView(query: string, page: number, y: number) {
+  const prev = readCatalogView();
+  const keepY =
+    y > 0 ? y : prev?.query === query && prev.y > 0 ? prev.y : 0;
+  writeCatalogView({ query, page, y: keepY });
+}
+
+function restoreScrollY(y: number) {
+  const html = document.documentElement;
+  const prev = html.style.scrollBehavior;
+  html.style.scrollBehavior = "auto";
+  window.scrollTo({ top: y, left: 0, behavior: "auto" });
+  html.style.scrollBehavior = prev;
+}
+
 function FilterIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg
@@ -175,11 +191,24 @@ export function CatalogPage() {
 
   useEffect(() => {
     const save = () => {
-      writeCatalogView({ query: queryKey, page, y: window.scrollY });
+      persistCatalogView(queryKey, page, window.scrollY);
     };
+
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(save);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("pagehide", save);
+    // Persist page count when it grows (infinite scroll).
+    persistCatalogView(queryKey, page, window.scrollY);
+
     return () => {
-      save();
+      cancelAnimationFrame(raf);
+      persistCatalogView(queryKey, page, window.scrollY);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pagehide", save);
     };
   }, [page, queryKey]);
@@ -188,15 +217,25 @@ export function CatalogPage() {
     if (scrollRestoredRef.current || !list.length) return;
     const saved = readCatalogView();
     if (!saved || saved.query !== queryKey || saved.y <= 0) return;
+
     if (page < saved.page) {
       setPage(saved.page);
       return;
     }
-    if (shown.length < Math.min(list.length, saved.page * PER) && hasMore) {
-      return;
-    }
+
+    const need = Math.min(list.length, saved.page * PER);
+    if (shown.length < need) return;
+
     scrollRestoredRef.current = true;
-    window.scrollTo({ top: saved.y, left: 0, behavior: "auto" });
+    restoreScrollY(saved.y);
+    const t1 = window.setTimeout(() => restoreScrollY(saved.y), 50);
+    const t2 = window.setTimeout(() => restoreScrollY(saved.y), 200);
+    const t3 = window.setTimeout(() => restoreScrollY(saved.y), 500);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.clearTimeout(t3);
+    };
   }, [queryKey, page, shown.length, list.length, hasMore]);
 
   useEffect(() => {

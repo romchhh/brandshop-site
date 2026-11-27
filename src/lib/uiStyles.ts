@@ -74,7 +74,7 @@ export function qtyShellClass(className = ""): string {
 
 export function qtyBtnClass(className = ""): string {
   return [
-    "flex h-10 w-10 items-center justify-center rounded-xl text-xl text-ink hover:bg-sale-soft hover:text-sale",
+    `flex h-10 w-10 items-center justify-center ${radius.control} text-xl text-ink hover:bg-sale-soft hover:text-sale`,
     className,
   ]
     .filter(Boolean)

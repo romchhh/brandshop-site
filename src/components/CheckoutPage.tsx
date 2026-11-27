@@ -819,7 +819,7 @@ function CheckoutSteps({
               } ${done ? "cursor-pointer" : "cursor-default"}`}
             >
               <span
-                className={`grid h-8 w-8 place-items-center rounded-full text-xs font-semibold ${
+                className={`grid h-8 w-8 place-items-center rounded-2xl text-xs font-semibold ${
                   active
                     ? "bg-sale text-white"
                     : done

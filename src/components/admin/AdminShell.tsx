@@ -110,7 +110,7 @@ function NavLink({
     <Link
       href={item.href}
       onClick={onNavigate}
-      className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition duration-200 ${
+      className={`group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition duration-200 ${
         active
           ? "bg-sale text-white shadow-[0_6px_20px_rgba(140,47,57,0.35)]"
           : "text-white/65 hover:bg-white/[0.06] hover:text-white"
@@ -154,7 +154,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <Link
           href="/"
           onClick={onNavigate}
-          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/55 transition hover:bg-white/[0.06] hover:text-white"
+          className="flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-white/55 transition hover:bg-white/[0.06] hover:text-white"
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M7 12h11M12 7l5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
@@ -164,7 +164,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <button
           type="button"
           onClick={() => void logout()}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-white/55 transition hover:bg-white/[0.06] hover:text-white"
+          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium text-white/55 transition hover:bg-white/[0.06] hover:text-white"
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M10 7V5a1 1 0 0 1 1-1h8v16h-8a1 1 0 0 1-1-1v-2M13 12H4m0 0 3-3M4 12l3 3" strokeLinecap="round" strokeLinejoin="round" />
@@ -216,7 +216,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <div className="flex h-14 items-center gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
             <button
               type="button"
-              className="grid h-10 w-10 place-items-center rounded-xl border border-black/10 bg-white lg:hidden"
+              className="grid h-10 w-10 place-items-center rounded-2xl border border-black/10 bg-white lg:hidden"
               onClick={() => setMobileOpen(true)}
               aria-label="Меню"
             >

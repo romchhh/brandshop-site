@@ -513,7 +513,7 @@ export function HomeHero() {
                   type="button"
                   aria-label="Попередні"
                   onClick={goPrev}
-                  className="grid h-10 w-10 place-items-center rounded-full border border-black/10 bg-white text-lg text-ink transition hover:border-sale hover:text-sale"
+                  className="grid h-10 w-10 place-items-center rounded-2xl border border-black/10 bg-white text-lg text-ink transition hover:border-sale hover:text-sale"
                 >
                   ←
                 </button>
@@ -521,7 +521,7 @@ export function HomeHero() {
                   type="button"
                   aria-label="Наступні"
                   onClick={goNext}
-                  className="grid h-10 w-10 place-items-center rounded-full border border-black/10 bg-white text-lg text-ink transition hover:border-sale hover:text-sale"
+                  className="grid h-10 w-10 place-items-center rounded-2xl border border-black/10 bg-white text-lg text-ink transition hover:border-sale hover:text-sale"
                 >
                   →
                 </button>

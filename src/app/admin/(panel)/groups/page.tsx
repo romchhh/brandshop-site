@@ -121,7 +121,7 @@ export default function AdminGroupsPage() {
               key={g.id}
               className="flex items-center gap-3 px-3 py-3 sm:gap-4 sm:px-5"
             >
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-black/[0.04] text-xs font-semibold tabular-nums text-mute">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-2xl bg-black/[0.04] text-xs font-semibold tabular-nums text-mute">
                 {index + 1}
               </span>
               <div className="min-w-0 flex-1">
@@ -136,7 +136,7 @@ export default function AdminGroupsPage() {
                   aria-label="Вище"
                   onClick={() => move(g.id, -1)}
                   disabled={index === 0}
-                  className="grid h-9 w-9 place-items-center rounded-xl border border-black/10 bg-white text-sm transition hover:border-sale hover:text-sale disabled:opacity-25"
+                  className="grid h-9 w-9 place-items-center rounded-2xl border border-black/10 bg-white text-sm transition hover:border-sale hover:text-sale disabled:opacity-25"
                 >
                   ↑
                 </button>
@@ -145,7 +145,7 @@ export default function AdminGroupsPage() {
                   aria-label="Нижче"
                   onClick={() => move(g.id, 1)}
                   disabled={index === ordered.length - 1}
-                  className="grid h-9 w-9 place-items-center rounded-xl border border-black/10 bg-white text-sm transition hover:border-sale hover:text-sale disabled:opacity-25"
+                  className="grid h-9 w-9 place-items-center rounded-2xl border border-black/10 bg-white text-sm transition hover:border-sale hover:text-sale disabled:opacity-25"
                 >
                   ↓
                 </button>

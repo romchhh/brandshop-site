@@ -204,7 +204,7 @@ export default function AdminPromosPage() {
                         onChange={(e) =>
                           update(r.id, { code: e.target.value })
                         }
-                        className="h-10 w-full min-w-[8rem] rounded-xl border border-black/10 bg-white px-3 text-sm font-medium"
+                        className="h-10 w-full min-w-[8rem] rounded-2xl border border-black/10 bg-white px-3 text-sm font-medium"
                         placeholder="5sale"
                       />
                     </td>
@@ -215,7 +215,7 @@ export default function AdminPromosPage() {
                           update(r.id, { percent: e.target.value })
                         }
                         inputMode="decimal"
-                        className="h-10 w-20 rounded-xl border border-black/10 bg-white px-3 text-sm tabular-nums"
+                        className="h-10 w-20 rounded-2xl border border-black/10 bg-white px-3 text-sm tabular-nums"
                         placeholder="5"
                       />
                     </td>
@@ -225,7 +225,7 @@ export default function AdminPromosPage() {
                         onChange={(e) =>
                           update(r.id, { note: e.target.value })
                         }
-                        className="h-10 w-full min-w-[10rem] rounded-xl border border-black/10 bg-white px-3 text-sm"
+                        className="h-10 w-full min-w-[10rem] rounded-2xl border border-black/10 bg-white px-3 text-sm"
                         placeholder="Для постійних клієнтів"
                       />
                     </td>
@@ -233,7 +233,7 @@ export default function AdminPromosPage() {
                       <button
                         type="button"
                         onClick={() => update(r.id, { active: !r.active })}
-                        className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                        className={`rounded-2xl px-3 py-1.5 text-xs font-semibold ${
                           r.active
                             ? "bg-emerald-50 text-emerald-800"
                             : "bg-black/[0.05] text-mute"

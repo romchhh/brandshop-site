@@ -211,7 +211,7 @@ export default function AdminDashboardPage() {
               </AdminBtn>
               <Link
                 href="/admin/promos"
-                className="inline-flex h-10 items-center justify-center rounded-xl border border-black/10 bg-white px-4 text-sm font-semibold text-ink transition hover:border-sale hover:text-sale"
+                className="inline-flex h-10 items-center justify-center rounded-2xl border border-black/10 bg-white px-4 text-sm font-semibold text-ink transition hover:border-sale hover:text-sale"
               >
                 Промокоди
               </Link>

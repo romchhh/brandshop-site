@@ -347,7 +347,7 @@ export function SearchSidebar({ isOpen, setIsOpen }: SearchSidebarProps) {
               setSelectedSuggestion(-1);
               inputRef.current?.focus();
             }}
-            className="absolute right-3 grid h-8 w-8 place-items-center rounded-xl text-black/40 hover:bg-black/5 hover:text-ink"
+            className="absolute right-3 grid h-8 w-8 place-items-center rounded-2xl text-black/40 hover:bg-black/5 hover:text-ink"
             aria-label="Очистити"
           >
             <IconX className="h-4 w-4" />
@@ -365,7 +365,7 @@ export function SearchSidebar({ isOpen, setIsOpen }: SearchSidebarProps) {
               key={s}
               type="button"
               onClick={() => onSuggestionPick(s)}
-              className={`mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
+              className={`mx-1 flex w-[calc(100%-0.5rem)] items-center gap-2.5 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors ${
                 index === selectedSuggestion
                   ? "bg-ink/10 text-ink"
                   : "text-black/80 hover:bg-ph"

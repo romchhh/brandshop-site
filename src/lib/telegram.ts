@@ -5,59 +5,73 @@ function money(n: number) {
   return `${n.toFixed(2)} грн`;
 }
 
+function esc(value: string | number | undefined | null): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function paymentText(order: LastOrder) {
   return order.paymentLabel || "Повна оплата на рахунок ФОП";
 }
 
 function formatOrderMessage(order: LastOrder): string {
-  const lines: string[] = [
-    `📯Замовлення №${order.number}`,
+  const subtotal = money(order.subtotal ?? order.total);
+  const discount = money(order.promoDiscount ?? 0);
+  const promoLine = order.promoCode
+    ? `${esc(order.promoCode)}${
+        order.promoPercent ? ` (−${order.promoPercent}%)` : ""
+      } · ${money(order.promoDiscount ?? 0)}`
+    : "0.00 грн";
+
+  const items = order.items
+    .map((item, i) => {
+      const size =
+        item.size && item.size !== ONE_SIZE ? item.size : "Один розмір";
+      return [
+        `<b>${i + 1}. ${esc(item.title)}</b>`,
+        `Артикул: <code>${esc(item.article)}</code>`,
+        `Розмір / тип: <b>${esc(size)}</b>`,
+        `Кількість: ${item.qty} шт.`,
+      ].join("\n");
+    })
+    .join("\n\n");
+
+  const deliveryBlock =
+    order.deliveryMethod === "nova_poshta"
+      ? [
+          `Місто: <b>${esc(order.city ?? "—")}</b>`,
+          `Відділення / адреса: <b>${esc(order.warehouse ?? order.deliveryLabel)}</b>`,
+        ].join("\n")
+      : `Доставка: <b>${esc(order.deliveryLabel)}</b>`;
+
+  const lines = [
+    `📯 <b>Замовлення №${esc(order.number)}</b>`,
     "",
-    `Джерело: сайт BrandShop`,
-    `Оплата: ${paymentText(order)}`,
-    `Сума замовлення: ${money(order.subtotal ?? order.total)}`,
-    `Знижка: ${money(order.promoDiscount ?? 0)}`,
-    `Знижка по промокоду: ${
-      order.promoCode
-        ? `${order.promoCode}${order.promoPercent ? ` (−${order.promoPercent}%)` : ""} · ${money(order.promoDiscount ?? 0)}`
-        : "0.00 грн"
-    }`,
-    `💵Сума до сплати: ${money(order.total)}`,
+    `<b>Джерело:</b> сайт BrandShop`,
+    `<b>Оплата:</b> ${esc(paymentText(order))}`,
+    `<b>Сума замовлення:</b> ${subtotal}`,
+    `<b>Знижка:</b> ${discount}`,
+    `<b>Знижка по промокоду:</b> ${promoLine}`,
+    `💵 <b>Сума до сплати: ${money(order.total)}</b>`,
     "",
-    `🛒 Товари`,
+    `🛒 <b>Товари</b>`,
+    items,
+    "",
+    `👤 <b>Клієнт і доставка</b>`,
+    `ПІБ: <b>${esc(order.name)}</b>`,
+    `Телефон: <code>${esc(order.phone)}</code>`,
   ];
 
-  order.items.forEach((item, i) => {
-    const size =
-      item.size && item.size !== ONE_SIZE ? item.size : "Один розмір";
-    lines.push(
-      `${i + 1}. ${item.title}`,
-      `   Артикул: ${item.article}`,
-      `   Розмір / тип: ${size}`,
-      `   Кількість: ${item.qty} шт.`,
-      "",
-    );
-  });
-
-  lines.push(`👤 Клієнт і доставка`);
-  lines.push(`ПІБ: ${order.name}`);
-  lines.push(`Телефон: ${order.phone}`);
-
   if (order.email) {
-    lines.push(`Email: ${order.email}`);
+    lines.push(`Email: <code>${esc(order.email)}</code>`);
   }
 
-  if (order.deliveryMethod === "nova_poshta") {
-    lines.push(`Місто: ${order.city ?? "—"}`);
-    lines.push(
-      `Відділення / адреса: ${order.warehouse ?? order.deliveryLabel}`,
-    );
-  } else {
-    lines.push(`Доставка: ${order.deliveryLabel}`);
-  }
+  lines.push(deliveryBlock);
 
   if (order.comment) {
-    lines.push("", `💬 Коментар: ${order.comment}`);
+    lines.push("", `💬 <b>Коментар:</b> ${esc(order.comment)}`);
   }
 
   return lines.join("\n").trim();
@@ -106,7 +120,8 @@ async function sendOrderPhotos(
     await tgApi(token, "sendPhoto", {
       chat_id: chatId,
       photo: photos[0],
-      caption: `📷 Фото замовлення №${order.number}`,
+      caption: `📷 Фото замовлення №${esc(order.number)}`,
+      parse_mode: "HTML",
     });
     return;
   }
@@ -115,7 +130,10 @@ async function sendOrderPhotos(
     type: "photo" as const,
     media: url,
     ...(i === 0
-      ? { caption: `📷 Фото замовлення №${order.number}` }
+      ? {
+          caption: `📷 Фото замовлення №${esc(order.number)}`,
+          parse_mode: "HTML",
+        }
       : {}),
   }));
 
@@ -141,6 +159,7 @@ export async function sendOrderToTelegram(
     await tgApi(token, "sendMessage", {
       chat_id: chatId,
       text: formatOrderMessage(order),
+      parse_mode: "HTML",
       disable_web_page_preview: true,
     });
 

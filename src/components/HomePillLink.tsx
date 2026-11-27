@@ -38,7 +38,7 @@ export function HomePillLink({
       className={`group inline-flex min-h-12 w-full max-w-sm items-center justify-between gap-3 border border-ink bg-white py-2 pl-7 pr-2 text-sm font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:border-sale sm:max-w-md lg:min-w-[300px] lg:w-auto lg:pl-8 ${radius.control} ${className}`}
     >
       <span className="flex-1 text-center">{children}</span>
-      <span className="flex aspect-square h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sale text-white transition-transform group-hover:scale-105">
+      <span className="flex aspect-square h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-sale text-white transition-transform group-hover:scale-105">
         <HomePillArrow className="h-4 w-4" />
       </span>
     </Link>
