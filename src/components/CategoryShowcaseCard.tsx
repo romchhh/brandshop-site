@@ -43,7 +43,7 @@ export function CategoryShowcaseCard({
         </p>
         <span className="mt-2 flex w-full items-center justify-between gap-2 rounded-2xl border border-white/25 bg-white/10 py-1 pr-1 pl-2.5 text-[10px] font-semibold leading-none text-white backdrop-blur-sm transition-colors group-hover:border-white/40 group-hover:bg-white/15 sm:mt-2.5 sm:text-[11px]">
           <span className="min-w-0 flex-1 text-left">Переглянути</span>
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white text-ink sm:h-8 sm:w-8">
+          <span className="flex aspect-square h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sale text-white sm:h-8 sm:w-8">
             <HomePillArrow className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </span>
         </span>

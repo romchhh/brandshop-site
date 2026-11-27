@@ -20,8 +20,12 @@ export function productCardMediaImageClass(): string {
   return "object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]";
 }
 
-export function productCardDiscountBadgeClass(): string {
-  return "absolute left-2.5 top-2.5 z-20 rounded-md bg-sale-soft px-2 py-0.5 text-[10px] font-semibold tracking-wide text-sale sm:left-3 sm:top-3 sm:text-[11px]";
+export function productCardDiscountBadgeClass(extra = ""): string {
+  return `absolute left-2.5 z-20 rounded-md bg-sale-soft px-2 py-0.5 text-[10px] font-semibold tracking-wide text-sale sm:left-3 sm:text-[11px] ${extra}`.trim();
+}
+
+export function productCardNewBadgeClass(): string {
+  return "absolute left-2.5 top-2.5 z-20 inline-flex items-center gap-0.5 rounded-md bg-ink px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white sm:left-3 sm:top-3 sm:text-[11px]";
 }
 
 export function productCardFavoriteWrapClass(): string {
@@ -34,6 +38,10 @@ export function productCardBodyClass(): string {
 
 export function productCardTitleClass(): string {
   return "text-[0.875rem] font-medium leading-[1.35] tracking-tight text-[#141414] line-clamp-2 sm:text-[0.9375rem]";
+}
+
+export function productCardSizesClass(): string {
+  return "text-[0.6875rem] leading-snug tracking-wide text-black/40 sm:text-[0.75rem]";
 }
 
 export function productCardPriceRowClass(): string {

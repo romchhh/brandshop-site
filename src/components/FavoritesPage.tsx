@@ -5,7 +5,8 @@ import { useCatalog } from "./CatalogProvider";
 import { useShop } from "./ShopProvider";
 import { ProductCard } from "./ProductCard";
 import { EmptyState } from "./OrderSummary";
-import { Button, Container, PageTitle } from "./ui";
+import { HomePillLink } from "./HomePillLink";
+import { Container, PageTitle } from "./ui";
 
 export function FavoritesPage() {
   const { productsById } = useCatalog();
@@ -34,9 +35,7 @@ export function FavoritesPage() {
           title="Тут поки порожньо"
           text="Натискайте на серце біля товару, щоб зберегти його."
           action={
-            <Button href="/catalog" variant="solid">
-              До каталогу
-            </Button>
+            <HomePillLink href="/catalog">До каталогу</HomePillLink>
           }
         />
       )}

@@ -38,8 +38,17 @@ export function CheckoutPage() {
   const [email, setEmail] = useState("");
 
   const [delivery, setDelivery] = useState<DeliveryMethod>("nova_poshta");
-  const [payment, setPayment] = useState<PaymentMethod>("card");
+  const [payment, setPayment] = useState<PaymentMethod>("fop");
   const [comment, setComment] = useState("");
+
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{
+    code: string;
+    percent: number;
+    discount: number;
+  } | null>(null);
+  const [promoBusy, setPromoBusy] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
 
   const [city, setCity] = useState("");
   const [cityRef, setCityRef] = useState("");
@@ -59,6 +68,91 @@ export function CheckoutPage() {
   const isNp = delivery === "nova_poshta";
   const cityBoxRef = useRef<HTMLDivElement>(null);
   const whBoxRef = useRef<HTMLDivElement>(null);
+
+  const promoDiscount = appliedPromo?.discount ?? 0;
+  const payTotal = useMemo(
+    () => Math.max(0, Math.round((cartSum - promoDiscount) * 100) / 100),
+    [cartSum, promoDiscount],
+  );
+
+  useEffect(() => {
+    if (!appliedPromo) return;
+    void (async () => {
+      try {
+        const res = await fetch("/api/promo/validate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: appliedPromo.code, subtotal: cartSum }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          code?: string;
+          percent?: number;
+          discount?: number;
+          error?: string;
+        };
+        if (!data.ok || !data.code || data.percent == null || data.discount == null) {
+          setAppliedPromo(null);
+          setPromoError(data.error ?? "Промокод більше не діє");
+          return;
+        }
+        setAppliedPromo({
+          code: data.code,
+          percent: data.percent,
+          discount: data.discount,
+        });
+      } catch {
+        /* keep previous until submit */
+      }
+    })();
+    // re-validate when cart sum changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartSum]);
+
+  async function applyPromo() {
+    setPromoError(null);
+    const code = promoInput.trim();
+    if (!code) {
+      setPromoError("Введіть промокод");
+      return;
+    }
+    setPromoBusy(true);
+    try {
+      const res = await fetch("/api/promo/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal: cartSum }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        code?: string;
+        percent?: number;
+        discount?: number;
+        error?: string;
+      };
+      if (!data.ok || !data.code || data.percent == null || data.discount == null) {
+        setAppliedPromo(null);
+        setPromoError(data.error ?? "Промокод недійсний");
+        return;
+      }
+      setAppliedPromo({
+        code: data.code,
+        percent: data.percent,
+        discount: data.discount,
+      });
+      setPromoInput(data.code);
+    } catch {
+      setPromoError("Не вдалося перевірити промокод");
+    } finally {
+      setPromoBusy(false);
+    }
+  }
+
+  function clearPromo() {
+    setAppliedPromo(null);
+    setPromoInput("");
+    setPromoError(null);
+  }
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -218,7 +312,11 @@ export function CheckoutPage() {
       paymentLabel: paymentLabel(payment),
       comment: comment.trim() || undefined,
       items,
-      total: cartSum,
+      subtotal: cartSum,
+      promoCode: appliedPromo?.code,
+      promoPercent: appliedPromo?.percent,
+      promoDiscount: appliedPromo?.discount ?? 0,
+      total: payTotal,
     };
 
     try {
@@ -274,6 +372,104 @@ export function CheckoutPage() {
         </div>
 
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem] xl:gap-12">
+          <aside className="order-first h-fit rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] sm:p-6 xl:order-last xl:sticky xl:top-28">
+            <h3 className="text-[0.8125rem] font-medium uppercase tracking-[0.2em] text-ink">
+              Ваше замовлення
+            </h3>
+
+            <div className="mt-5 rounded-2xl border border-sale/20 bg-sale-soft/50 p-4">
+              <p className="text-sm font-semibold text-ink">Є промокод?</p>
+              <p className="mt-0.5 text-xs text-mute">
+                Введіть код — знижка одразу з’явиться в сумі
+              </p>
+              {appliedPromo ? (
+                <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-ink">
+                      {appliedPromo.code}
+                    </p>
+                    <p className="text-xs text-emerald-700">
+                      −{appliedPromo.percent}% · −
+                      {formatMoney(appliedPromo.discount)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearPromo}
+                    className="shrink-0 text-xs font-semibold uppercase tracking-caps text-mute transition hover:text-sale"
+                  >
+                    Скинути
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-3 flex gap-2">
+                  <input
+                    value={promoInput}
+                    onChange={(e) => {
+                      setPromoInput(e.target.value.toUpperCase());
+                      setPromoError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void applyPromo();
+                      }
+                    }}
+                    placeholder="Наприклад, SALE10"
+                    className={fieldClass(
+                      "h-12 min-w-0 flex-1 px-3.5 text-sm uppercase tracking-wide",
+                    )}
+                    aria-label="Промокод"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
+                  />
+                  <button
+                    type="button"
+                    disabled={promoBusy}
+                    onClick={() => void applyPromo()}
+                    className="h-12 shrink-0 rounded-2xl bg-ink px-4 text-xs font-semibold uppercase tracking-caps text-white transition hover:bg-sale disabled:opacity-60"
+                  >
+                    {promoBusy ? "…" : "Застосувати"}
+                  </button>
+                </div>
+              )}
+              {promoError ? (
+                <p className="mt-2 text-xs text-sale">{promoError}</p>
+              ) : null}
+            </div>
+
+            <div className="mt-5 space-y-3 text-[1.05rem] tabular-nums">
+              <div className="flex justify-between gap-3">
+                <span className="text-mute">Товари ({cartCount})</span>
+                <span>{formatMoney(cartSum)}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-mute">Доставка</span>
+                <span className="max-w-[10rem] text-right text-sm font-medium text-black/55">
+                  {isNp ? "за тарифами перевізника" : "безкоштовно"}
+                </span>
+              </div>
+              {appliedPromo ? (
+                <div className="flex justify-between gap-3 text-sale">
+                  <span>Знижка за промокодом</span>
+                  <span>−{formatMoney(appliedPromo.discount)}</span>
+                </div>
+              ) : null}
+              <div className="mt-2 flex justify-between gap-3 border-t border-line pt-4 text-xl font-semibold">
+                <span>Разом</span>
+                <span>{formatMoney(payTotal)}</span>
+              </div>
+            </div>
+
+            {step === 2 && (
+              <p className="mt-4 text-xs leading-relaxed text-mute">
+                Після підтвердження менеджер надішле реквізити рахунку ФОП та
+                статус відправлення.
+              </p>
+            )}
+          </aside>
+
           <div className="space-y-5">
             {step === 1 ? (
               <section className="rounded-2xl border border-black/[0.06] bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] sm:p-7">
@@ -563,56 +759,30 @@ export function CheckoutPage() {
                   </p>
                 )}
 
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="inline-flex h-14 items-center justify-center rounded-2xl border border-ink bg-white px-6 text-[0.75rem] font-semibold uppercase tracking-caps text-ink transition-colors hover:bg-ph sm:w-auto"
-                  >
-                    Назад
-                  </button>
+                <div className="mt-8 space-y-3">
                   <button
                     type="button"
                     disabled={submitting}
                     onClick={() => void placeOrder()}
                     className={btnSolidClass(
-                      "h-14 flex-1 px-8 uppercase tracking-caps",
+                      "h-16 w-full px-8 text-[0.9375rem] uppercase tracking-caps sm:h-[4.25rem] sm:text-base",
                     )}
                   >
-                    {submitting ? "Оформлюємо…" : "Підтвердити"}
+                    {submitting
+                      ? "Оформлюємо…"
+                      : `Підтвердити · ${formatMoney(payTotal)}`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="inline-flex h-12 w-full items-center justify-center rounded-2xl border border-black/10 bg-white px-6 text-[0.8125rem] font-semibold uppercase tracking-caps text-ink transition-colors hover:border-ink hover:bg-ph"
+                  >
+                    Назад
                   </button>
                 </div>
               </section>
             )}
           </div>
-
-          <aside className="h-fit rounded-2xl border border-black/[0.06] bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] xl:sticky xl:top-28">
-            <h3 className="text-[0.8125rem] font-medium uppercase tracking-[0.2em] text-ink">
-              Ваше замовлення
-            </h3>
-            <div className="mt-5 space-y-3 text-[1.05rem] tabular-nums">
-              <div className="flex justify-between gap-3">
-                <span className="text-mute">Товари ({cartCount})</span>
-                <span>{formatMoney(cartSum)}</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-mute">Доставка</span>
-                <span className="max-w-[10rem] text-right text-sm font-medium text-black/55">
-                  {isNp ? "за тарифами НП" : "безкоштовно"}
-                </span>
-              </div>
-              <div className="mt-2 flex justify-between gap-3 border-t border-line pt-4 text-xl font-semibold">
-                <span>Разом</span>
-                <span>{formatMoney(cartSum)}</span>
-              </div>
-            </div>
-            {step === 2 && (
-              <p className="mt-4 text-xs leading-relaxed text-mute">
-                Після підтвердження менеджер надішле деталі оплати
-                {payment === "card" ? " на картку" : ""} та статус відправлення.
-              </p>
-            )}
-          </aside>
         </div>
       </Container>
     </div>

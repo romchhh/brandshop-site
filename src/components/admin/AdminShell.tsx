@@ -7,7 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 const NAV = [
   {
     href: "/admin",
-    label: "Огляд",
+    label: "Дашборд",
     exact: true,
     icon: (
       <path
@@ -58,6 +58,33 @@ const NAV = [
     icon: (
       <path
         d="M7 4h10v16l-2-1.2L13 20l-2-1.2L9 20l-2-1.2V4zM9 8h6M9 12h6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    ),
+  },
+  {
+    href: "/admin/users",
+    label: "Клієнти",
+    icon: (
+      <path
+        d="M16 19v-1a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v1M12 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM19 8v4M21 10h-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    ),
+  },
+  {
+    href: "/admin/promos",
+    label: "Промокоди",
+    icon: (
+      <path
+        d="M5 8.5 12 4l7 4.5V19a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8.5zM9 13h6"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.5"

@@ -20,5 +20,28 @@
     "glasses"
   ],
   "hiddenProductIds": [],
-  "updatedAt": "2026-11-26T18:30:00.000Z"
+  "promoCodes": [
+    {
+      "id": "promo-5sale",
+      "code": "5sale",
+      "percent": 5,
+      "active": true,
+      "note": "Знижка 5%"
+    },
+    {
+      "id": "promo-7sale7",
+      "code": "7sale7",
+      "percent": 7,
+      "active": true,
+      "note": "Знижка 7%"
+    },
+    {
+      "id": "promo-brandshop10",
+      "code": "Brandshop10%",
+      "percent": 10,
+      "active": true,
+      "note": "Знижка 10%"
+    }
+  ],
+  "updatedAt": "2026-11-27T00:00:00.000Z"
 }

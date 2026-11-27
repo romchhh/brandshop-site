@@ -1,15 +1,28 @@
 import type { Metadata } from "next";
+import { permanentRedirect, notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductDetail } from "@/components/ProductDetail";
 import { formatMoney, productImageUrl } from "@/lib/catalog";
 import { getCatalogPublic } from "@/lib/feed/store";
+import {
+  productIdFromSlug,
+  productPath,
+  productSlug,
+} from "@/lib/product-url";
 import { absoluteUrl, productJsonLd } from "@/lib/seo";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const num = Number(id);
+  const { slug } = await params;
+  const num = productIdFromSlug(slug);
+  if (!num) {
+    return {
+      title: "Товар не знайдено",
+      robots: { index: false, follow: false },
+    };
+  }
+
   try {
     const catalog = await getCatalogPublic();
     const product = catalog.products.find((p) => p.id === num);
@@ -22,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const image = productImageUrl(product);
     const description = `${product.brand} — ${product.title}. Ціна ${formatMoney(product.priceSite)}. Доставка Новою Поштою.`;
-    const url = absoluteUrl(`/product/${product.id}`);
+    const url = absoluteUrl(productPath(product));
 
     return {
       title: product.title,
@@ -49,30 +62,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function Page({ params }: Props) {
-  const { id } = await params;
-  const num = Number(id);
+  const { slug } = await params;
+  const num = productIdFromSlug(slug);
+  if (!num) notFound();
 
-  let jsonLd: ReturnType<typeof productJsonLd> | null = null;
+  let catalog: Awaited<ReturnType<typeof getCatalogPublic>> | null = null;
   try {
-    const catalog = await getCatalogPublic();
-    const product = catalog.products.find((p) => p.id === num);
-    if (product) {
-      jsonLd = productJsonLd({
-        id: product.id,
-        title: product.title,
-        brand: product.brand,
-        priceSite: product.priceSite,
-        imageUrl: productImageUrl(product),
-        description: `${product.brand} — ${product.title}`,
-      });
-    }
+    catalog = await getCatalogPublic();
   } catch {
-    /* catalog unavailable */
+    /* catalog unavailable — still render client detail */
+    return <ProductDetail id={num} />;
   }
+
+  const product = catalog.products.find((p) => p.id === num);
+  if (!product) notFound();
+
+  const canonical = productSlug(product);
+  if (slug !== canonical) {
+    permanentRedirect(productPath(product));
+  }
+
+  const jsonLd = productJsonLd({
+    id: product.id,
+    title: product.title,
+    brand: product.brand,
+    priceSite: product.priceSite,
+    imageUrl: productImageUrl(product),
+    description: `${product.brand} — ${product.title}`,
+  });
 
   return (
     <>
-      {jsonLd ? <JsonLd data={jsonLd} /> : null}
+      <JsonLd data={jsonLd} />
       <ProductDetail id={num} />
     </>
   );

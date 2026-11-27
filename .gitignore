@@ -34,6 +34,8 @@ yarn-error.log*
 
 # catalog sync temp files
 /data/*.tmp
+/data/*.sqlite
+/data/*.sqlite-*
 
 # typescript
 *.tsbuildinfo

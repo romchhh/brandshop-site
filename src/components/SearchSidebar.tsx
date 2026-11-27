@@ -17,6 +17,7 @@ import {
   productImageUrl,
   type Product,
 } from "@/lib/catalog";
+import { productPath } from "@/lib/product-url";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 import { useCatalog } from "./CatalogProvider";
 import { IconSearch, IconX } from "./icons";
@@ -104,7 +105,7 @@ function ProductRow({
   return (
     <li>
       <Link
-        href={`/product/${product.id}`}
+        href={productPath(product)}
         onClick={(e) => {
           e.preventDefault();
           onSelect();
@@ -271,7 +272,7 @@ export function SearchSidebar({ isOpen, setIsOpen }: SearchSidebarProps) {
       saveHistory(product.title);
       setHistory(readHistory());
       setIsOpen(false);
-      router.push(`/product/${product.id}`);
+      router.push(productPath(product));
     },
     [router, setIsOpen],
   );

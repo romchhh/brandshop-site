@@ -3,22 +3,34 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
+  AdminBadge,
   AdminBtn,
   AdminPageHeader,
   AdminPanel,
   AdminStatCard,
   AdminToast,
 } from "@/components/admin/adminUi";
+import { formatMoney } from "@/lib/catalog";
+import type { StoredOrder, StoredUser } from "@/lib/admin/types";
 
-type Stats = {
+type DashStats = {
   products: number;
   hidden: number;
-  orders: number;
   syncedAt: string | null;
+  activePromos: number;
+  ordersTotal: number;
+  ordersToday: number;
+  revenueTotal: number;
+  revenueToday: number;
+  usersTotal: number;
+  avgOrder: number;
+  promoOrders: number;
+  recentOrders: StoredOrder[];
+  topUsers: StoredUser[];
 };
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<DashStats | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState<{
     text: string;
@@ -26,23 +38,9 @@ export default function AdminDashboardPage() {
   } | null>(null);
 
   const load = useCallback(async () => {
-    const [productsRes, ordersRes, catalogRes] = await Promise.all([
-      fetch("/api/admin/products?limit=1"),
-      fetch("/api/admin/orders"),
-      fetch("/api/catalog"),
-    ]);
-    const products = (await productsRes.json()) as {
-      total?: number;
-      hiddenCount?: number;
-    };
-    const orders = (await ordersRes.json()) as { orders?: unknown[] };
-    const catalog = (await catalogRes.json()) as { syncedAt?: string };
-    setStats({
-      products: products.total ?? 0,
-      hidden: products.hiddenCount ?? 0,
-      orders: orders.orders?.length ?? 0,
-      syncedAt: catalog.syncedAt ?? null,
-    });
+    const res = await fetch("/api/admin/stats");
+    const data = (await res.json()) as { ok?: boolean; stats?: DashStats };
+    if (data.ok && data.stats) setStats(data.stats);
   }, []);
 
   useEffect(() => {
@@ -81,8 +79,8 @@ export default function AdminDashboardPage() {
   return (
     <div>
       <AdminPageHeader
-        title="Огляд"
-        description="Стан вітрини, синхронізація фіду та швидкі дії."
+        title="Дашборд"
+        description="Замовлення й клієнти в SQLite · каталог з фіду · швидкі дії."
         actions={
           <AdminBtn onClick={() => void syncFeed()} disabled={syncing}>
             {syncing ? "Синхронізація…" : "Оновити фід"}
@@ -90,24 +88,42 @@ export default function AdminDashboardPage() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <AdminStatCard
-          label="Товари"
-          value={stats ? String(stats.products) : "—"}
-          hint="У публічному каталозі"
-          href="/admin/products"
-        />
-        <AdminStatCard
-          label="Приховані"
-          value={stats ? String(stats.hidden) : "—"}
-          hint="Не показуються на сайті"
-          href="/admin/products"
+          label="Виручка"
+          value={stats ? formatMoney(stats.revenueTotal) : "—"}
+          hint={
+            stats
+              ? `Сьогодні ${formatMoney(stats.revenueToday)} · ${stats.ordersToday} зам.`
+              : "Збережені замовлення"
+          }
+          href="/admin/orders"
         />
         <AdminStatCard
           label="Замовлення"
-          value={stats ? String(stats.orders) : "—"}
-          hint="Збережені з сайту"
+          value={stats ? String(stats.ordersTotal) : "—"}
+          hint={
+            stats
+              ? `Середній чек ${formatMoney(stats.avgOrder)}`
+              : "У SQLite"
+          }
           href="/admin/orders"
+        />
+        <AdminStatCard
+          label="Клієнти"
+          value={stats ? String(stats.usersTotal) : "—"}
+          hint="Унікальні за телефоном"
+          href="/admin/users"
+        />
+        <AdminStatCard
+          label="Товари"
+          value={stats ? String(stats.products) : "—"}
+          hint={
+            stats
+              ? `Приховано ${stats.hidden} · промо ${stats.activePromos}`
+              : "Каталог"
+          }
+          href="/admin/products"
         />
       </div>
 
@@ -118,75 +134,126 @@ export default function AdminDashboardPage() {
       ) : null}
 
       <div className="mt-6 grid gap-4 lg:grid-cols-5">
-        <AdminPanel className="lg:col-span-3">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-mute">
-            Каталог
-          </p>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight">
-            Синхронізація з фідом
-          </h2>
-          <p className="mt-2 text-sm leading-relaxed text-mute">
-            Останнє оновлення:{" "}
-            <span className="font-medium text-ink">
-              {stats?.syncedAt
-                ? new Date(stats.syncedAt).toLocaleString("uk-UA")
-                : "—"}
-            </span>
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <AdminBtn onClick={() => void syncFeed()} disabled={syncing}>
-              {syncing ? "Завантаження…" : "Синхронізувати зараз"}
-            </AdminBtn>
+        <AdminPanel className="lg:col-span-3" flush>
+          <div className="flex items-center justify-between border-b border-black/[0.06] px-5 py-4 sm:px-6">
+            <div>
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-mute">
+                Останні замовлення
+              </p>
+              <h2 className="mt-1 text-lg font-semibold tracking-tight">
+                Жива стрічка
+              </h2>
+            </div>
             <Link
-              href="/admin/groups"
-              className="inline-flex h-10 items-center justify-center rounded-xl border border-black/10 bg-white px-4 text-sm font-semibold text-ink transition hover:border-sale hover:text-sale"
+              href="/admin/orders"
+              className="text-sm font-semibold text-sale hover:underline"
             >
-              Порядок груп
+              Усі →
             </Link>
           </div>
+          {!stats ? (
+            <p className="p-6 text-sm text-mute">Завантаження…</p>
+          ) : stats.recentOrders.length === 0 ? (
+            <p className="p-6 text-sm text-mute">
+              Поки немає замовлень. Після оформлення на сайті вони з’являться тут.
+            </p>
+          ) : (
+            <ul className="divide-y divide-black/[0.05]">
+              {stats.recentOrders.map((o) => (
+                <li
+                  key={o.number}
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 sm:px-6"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-ink">
+                      №{o.number}{" "}
+                      <span className="font-medium text-mute">· {o.name}</span>
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-mute">
+                      {o.phone}
+                      {o.promoCode ? ` · промо ${o.promoCode}` : ""} ·{" "}
+                      {new Date(o.savedAt).toLocaleString("uk-UA")}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold tabular-nums">
+                      {formatMoney(o.total)}
+                    </p>
+                    {o.promoDiscount && o.promoDiscount > 0 ? (
+                      <AdminBadge tone="sale">−{formatMoney(o.promoDiscount)}</AdminBadge>
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </AdminPanel>
 
-        <AdminPanel className="lg:col-span-2">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-mute">
-            Швидкі посилання
-          </p>
-          <ul className="mt-4 space-y-1">
-            {[
-              {
-                href: "/admin/groups",
-                title: "Групи / новинки",
-                desc: "Черговість категорій на вітрині",
-              },
-              {
-                href: "/admin/products",
-                title: "Товари",
-                desc: "Пошук і приховування позицій",
-              },
-              {
-                href: "/admin/orders",
-                title: "Замовлення",
-                desc: "Історія після Telegram",
-              },
-            ].map((item) => (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className="flex items-start justify-between gap-3 rounded-xl px-3 py-3 transition hover:bg-black/[0.03]"
-                >
-                  <span>
-                    <span className="block text-sm font-semibold text-ink">
-                      {item.title}
-                    </span>
-                    <span className="mt-0.5 block text-xs text-mute">
-                      {item.desc}
-                    </span>
-                  </span>
-                  <span className="mt-0.5 text-mute">→</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </AdminPanel>
+        <div className="flex flex-col gap-4 lg:col-span-2">
+          <AdminPanel>
+            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-mute">
+              Каталог
+            </p>
+            <h2 className="mt-2 text-xl font-semibold tracking-tight">
+              Синхронізація
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-mute">
+              Останнє оновлення:{" "}
+              <span className="font-medium text-ink">
+                {stats?.syncedAt
+                  ? new Date(stats.syncedAt).toLocaleString("uk-UA")
+                  : "—"}
+              </span>
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <AdminBtn onClick={() => void syncFeed()} disabled={syncing}>
+                {syncing ? "Завантаження…" : "Синхронізувати"}
+              </AdminBtn>
+              <Link
+                href="/admin/promos"
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-black/10 bg-white px-4 text-sm font-semibold text-ink transition hover:border-sale hover:text-sale"
+              >
+                Промокоди
+              </Link>
+            </div>
+            {stats ? (
+              <p className="mt-4 text-xs text-mute">
+                З промокодом: {stats.promoOrders} замовлень
+              </p>
+            ) : null}
+          </AdminPanel>
+
+          <AdminPanel flush>
+            <div className="flex items-center justify-between border-b border-black/[0.06] px-5 py-4">
+              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-mute">
+                Топ клієнти
+              </p>
+              <Link
+                href="/admin/users"
+                className="text-sm font-semibold text-sale hover:underline"
+              >
+                Усі →
+              </Link>
+            </div>
+            {!stats ? (
+              <p className="p-5 text-sm text-mute">Завантаження…</p>
+            ) : stats.topUsers.length === 0 ? (
+              <p className="p-5 text-sm text-mute">Клієнтів ще немає.</p>
+            ) : (
+              <ul className="divide-y divide-black/[0.05]">
+                {stats.topUsers.map((u) => (
+                  <li key={u.id} className="px-5 py-3">
+                    <p className="text-sm font-semibold text-ink">{u.name}</p>
+                    <p className="mt-0.5 text-xs text-mute">
+                      {u.phone} · {u.ordersCount} зам. ·{" "}
+                      {formatMoney(u.totalSpent)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </AdminPanel>
+        </div>
       </div>
     </div>
   );

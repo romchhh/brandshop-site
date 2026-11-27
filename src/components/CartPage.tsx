@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { ONE_SIZE, formatMoney } from "@/lib/catalog";
+import { productPath } from "@/lib/product-url";
 import { useCatalog } from "./CatalogProvider";
 import { useShop } from "./ShopProvider";
 import { ProductImage } from "./ProductImage";
 import { EmptyState, OrderSummary } from "./OrderSummary";
 import { qtyBtnClass, qtyShellClass } from "@/lib/uiStyles";
+import { HomePillLink } from "./HomePillLink";
 import { Button, Container, PageTitle, TextLink } from "./ui";
 
 export function CartPage() {
@@ -27,9 +29,7 @@ export function CartPage() {
           title="Кошик порожній"
           text="Додайте товари з каталогу, щоб оформити замовлення."
           action={
-            <Button href="/catalog" variant="solid">
-              До каталогу
-            </Button>
+            <HomePillLink href="/catalog">До каталогу</HomePillLink>
           }
         />
       ) : (
@@ -43,12 +43,12 @@ export function CartPage() {
                   key={`${line.id}-${line.size}`}
                   className="grid grid-cols-[6.5rem_minmax(0,1fr)_auto] gap-5 border-t border-line py-6 last:border-b"
                 >
-                  <Link href={`/product/${p.id}`}>
+                  <Link href={productPath(p)}>
                     <ProductImage product={p} className="!aspect-[3/4]" sizes="96px" />
                   </Link>
                   <div>
                     <Link
-                      href={`/product/${p.id}`}
+                      href={productPath(p)}
                       className="block text-base font-medium hover:underline"
                     >
                       {p.title}

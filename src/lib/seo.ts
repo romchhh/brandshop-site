@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { productPath } from "@/lib/product-url";
 import { SITE } from "@/lib/site";
 
 export const SITE_URL =
@@ -8,7 +9,7 @@ export const SITE_NAME = SITE.brand;
 export const SITE_NAME_FULL = SITE.brandFull;
 
 export const DEFAULT_DESCRIPTION =
-  "Чоловічий одяг, взуття та аксесуари. Новинки щотижня, доставка Новою Поштою по Україні, оплата при отриманні.";
+  "Чоловічий одяг, взуття та аксесуари. Новинки щотижня, доставка Новою Поштою по Україні, оплата на рахунок ФОП.";
 
 export const DEFAULT_KEYWORDS = [
   "чоловічий одяг",
@@ -131,7 +132,7 @@ export function productJsonLd(product: {
     },
     offers: {
       "@type": "Offer",
-      url: absoluteUrl(`/product/${product.id}`),
+      url: absoluteUrl(productPath(product)),
       priceCurrency: "UAH",
       price: product.priceSite,
       availability: "https://schema.org/InStock",

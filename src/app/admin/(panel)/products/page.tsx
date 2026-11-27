@@ -13,6 +13,7 @@ import {
   AdminToast,
 } from "@/components/admin/adminUi";
 import { formatMoney } from "@/lib/catalog";
+import { productPath } from "@/lib/product-url";
 
 type Item = {
   id: number;
@@ -179,7 +180,7 @@ export default function AdminProductsPage() {
                         </div>
                         <div className="min-w-0">
                           <Link
-                            href={`/product/${p.id}`}
+                            href={productPath(p)}
                             target="_blank"
                             className="line-clamp-1 font-semibold text-ink hover:text-sale"
                           >

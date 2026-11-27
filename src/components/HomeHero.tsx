@@ -17,6 +17,7 @@ import {
   productImageUrl,
   type Product,
 } from "@/lib/catalog";
+import { productPath } from "@/lib/product-url";
 import { SITE } from "@/lib/site";
 import { useCatalog } from "./CatalogProvider";
 import { useShop } from "./ShopProvider";
@@ -103,7 +104,7 @@ function HeroCard({
 
   return (
     <Link
-      href={`/product/${product.id}`}
+      href={productPath(product)}
       draggable={false}
       className="group block w-full shrink-0 select-none"
       aria-label={`${product.title}, ${formatMoney(product.priceSite)}`}

@@ -1,12 +1,14 @@
 "use client";
 
-import { btnSolidClass } from "@/lib/uiStyles";
+import { btnOutlineClass, btnSolidClass } from "@/lib/uiStyles";
 import { IconBag } from "./icons";
 
 type Props = {
   onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   size?: "sm" | "lg";
+  /** solid — чорна CTA; outline — біла з бордером (картки). */
+  variant?: "solid" | "outline";
   className?: string;
   label?: string;
 };
@@ -20,9 +22,15 @@ export function AddToCartButton({
   onClick,
   disabled,
   size = "sm",
+  variant = "solid",
   className = "",
   label = "В кошик",
 }: Props) {
+  const tone =
+    variant === "outline"
+      ? btnOutlineClass(`${SIZE_CLASSES[size]} font-medium ${className}`)
+      : btnSolidClass(`${SIZE_CLASSES[size]} font-medium ${className}`);
+
   return (
     <button
       type="button"
@@ -30,8 +38,8 @@ export function AddToCartButton({
       disabled={disabled}
       className={
         disabled
-          ? `inline-flex items-center justify-center rounded-2xl bg-black/10 font-medium text-black/40 ${SIZE_CLASSES[size]} ${className}`
-          : btnSolidClass(`${SIZE_CLASSES[size]} font-medium ${className}`)
+          ? `inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white font-medium text-black/35 ${SIZE_CLASSES[size]} ${className}`
+          : tone
       }
     >
       <IconBag className="h-4 w-4 shrink-0 [&_path]:stroke-[1.8]" />

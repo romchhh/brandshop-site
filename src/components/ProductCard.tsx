@@ -3,30 +3,51 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatMoney, productImageUrl, type Product } from "@/lib/catalog";
+import {
+  ONE_SIZE,
+  formatMoney,
+  productImageUrl,
+  sortSizes,
+  type Product,
+} from "@/lib/catalog";
+import { productPath } from "@/lib/product-url";
 import {
   productCardBodyClass,
   productCardDiscountBadgeClass,
   productCardFavoriteWrapClass,
   productCardMediaImageClass,
   productCardMediaWrapClass,
+  productCardNewBadgeClass,
   productCardPriceClass,
   productCardPriceRowClass,
   productCardRootClass,
+  productCardSizesClass,
   productCardStrikePriceClass,
   productCardTitleClass,
 } from "@/lib/productCardStyles";
+import { useCatalog } from "./CatalogProvider";
 import { useShop } from "./ShopProvider";
 import { AddToCartButton } from "./AddToCartButton";
 import { IconHeart } from "./icons";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  forceNew = false,
+}: {
+  product: Product;
+  /** Завжди показати плашку NEW (секція «Новинки»). */
+  forceNew?: boolean;
+}) {
   const router = useRouter();
+  const { newProductIds } = useCatalog();
   const { isFavorite, toggleFavorite, addToCart } = useShop();
   const fav = isFavorite(product.id);
+  const isNew = forceNew || newProductIds.has(product.id);
   const discount = product.sale
     ? Math.round((1 - product.priceSite / product.priceTable) * 100)
     : 0;
+  const sizes =
+    product.sizes[0] === ONE_SIZE ? [] : sortSizes(product.sizes);
 
   function handleQuickAdd(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -35,12 +56,12 @@ export function ProductCard({ product }: { product: Product }) {
       addToCart(product.id, product.sizes[0]);
       return;
     }
-    router.push(`/product/${product.id}`);
+    router.push(productPath(product));
   }
 
   return (
     <Link
-      href={`/product/${product.id}`}
+      href={productPath(product)}
       scroll={false}
       className={productCardRootClass()}
     >
@@ -57,9 +78,20 @@ export function ProductCard({ product }: { product: Product }) {
           loading="lazy"
         />
 
-        {discount > 0 && (
-          <span className={productCardDiscountBadgeClass()}>−{discount}%</span>
-        )}
+        {isNew ? (
+          <span className={productCardNewBadgeClass()}>
+            <span aria-hidden>🔥</span> NEW
+          </span>
+        ) : null}
+        {discount > 0 ? (
+          <span
+            className={productCardDiscountBadgeClass(
+              isNew ? "top-9 sm:top-10" : "top-2.5 sm:top-3",
+            )}
+          >
+            −{discount}%
+          </span>
+        ) : null}
 
         <div className={productCardFavoriteWrapClass()}>
           <button
@@ -83,6 +115,11 @@ export function ProductCard({ product }: { product: Product }) {
 
       <div className={productCardBodyClass()}>
         <h3 className={productCardTitleClass()}>{product.title}</h3>
+        {sizes.length ? (
+          <p className={productCardSizesClass()} aria-label="Доступні розміри">
+            {sizes.join(" · ")}
+          </p>
+        ) : null}
 
         <div className={productCardPriceRowClass()}>
           <div className="flex min-h-[1.25rem] flex-wrap items-baseline gap-x-2 gap-y-0.5">
@@ -97,6 +134,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
           <AddToCartButton
             size="sm"
+            variant="outline"
             className="w-full"
             label={product.sizes.length === 1 ? "В кошик" : "Обрати"}
             onClick={handleQuickAdd}

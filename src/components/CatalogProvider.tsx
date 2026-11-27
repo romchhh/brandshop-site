@@ -11,6 +11,7 @@ import {
 import {
   categoryRankMap,
   indexById,
+  newProductIdSet,
   orderCategoryGroups,
   type CategoryGroup,
   type Product,
@@ -30,6 +31,7 @@ type CatalogContextValue = {
   groupOrder: string[];
   categoryGroups: CategoryGroup[];
   categoryRank: Map<number, number>;
+  newProductIds: Set<number>;
 };
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
@@ -49,10 +51,12 @@ const emptyValue: CatalogContextValue = {
   groupOrder: [],
   categoryGroups: orderCategoryGroups(),
   categoryRank: categoryRankMap(orderCategoryGroups()),
+  newProductIds: new Set(),
 };
 
 function fromPublic(data: CatalogPublic): CatalogContextValue {
   const groups = orderCategoryGroups(data.groupOrder);
+  const categoryRank = categoryRankMap(groups);
   return {
     products: data.products,
     productsById: indexById(data.products),
@@ -65,7 +69,8 @@ function fromPublic(data: CatalogPublic): CatalogContextValue {
     ready: true,
     groupOrder: data.groupOrder ?? groups.map((g) => g.id),
     categoryGroups: groups,
-    categoryRank: categoryRankMap(groups),
+    categoryRank,
+    newProductIds: newProductIdSet(data.products, 48, categoryRank),
   };
 }
 

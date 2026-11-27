@@ -77,22 +77,8 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col gap-2 border-t border-line pt-5 text-center text-[0.8125rem] text-mute md:mt-14 md:flex-row md:items-center md:justify-between md:gap-4 md:pt-6 md:text-left md:text-[0.9rem]">
+        <div className="mt-8 border-t border-line pt-5 text-center text-[0.8125rem] text-mute md:mt-14 md:pt-6 md:text-left md:text-[0.9rem]">
           <span>© 2026 {SITE.brandFull}</span>
-          <a href={SITE.domain} className="hover:text-sale">
-            {SITE.host}
-          </a>
-          <p className="md:ml-auto">
-            Розробка{" "}
-            <a
-              href="https://telebots.site/uk"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-ink hover:text-sale"
-            >
-              TeleBots
-            </a>
-          </p>
         </div>
       </Container>
     </footer>

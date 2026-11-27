@@ -47,7 +47,7 @@ export default function AdminOrdersPage() {
     <div>
       <AdminPageHeader
         title="Замовлення"
-        description="Зберігаються після успішної відправки в Telegram (до 500 останніх)."
+        description="Зберігаються в SQLite після успішної відправки в Telegram."
         actions={
           !loading && orders.length > 0 ? (
             <AdminBadge tone="neutral">

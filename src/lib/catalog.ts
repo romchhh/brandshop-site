@@ -418,6 +418,23 @@ export function homeNewItems(
   return sorted.slice(0, limit);
 }
 
+/** Id новинок (той самий порядок, що й «Новинки») — для бейджа NEW. */
+export function newProductIdSet(
+  products: Product[],
+  limit = 48,
+  rank?: Map<number, number>,
+): Set<number> {
+  if (!products.length) return new Set();
+  const n = Math.min(
+    limit,
+    Math.max(24, Math.ceil(products.length * 0.08)),
+  );
+  const sorted = rank?.size
+    ? sortByGroupThenId(products, rank)
+    : [...products].sort((a, b) => b.id - a.id);
+  return new Set(sorted.slice(0, n).map((p) => p.id));
+}
+
 /**
  * Акційні пропозиції: товари зі знижкою, без аксесуарів
  * (як promotional_products у give-me).

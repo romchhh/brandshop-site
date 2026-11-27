@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { btnSolidClass, radius } from "@/lib/uiStyles";
+import { radius } from "@/lib/uiStyles";
 
 export function HomePillArrow({ className = "" }: { className?: string }) {
   return (
@@ -35,15 +35,11 @@ export function HomePillLink({
   return (
     <Link
       href={href}
-      className={btnSolidClass(
-        `group min-h-12 w-full max-w-sm justify-between gap-3 py-2 pl-7 pr-2 text-sm uppercase tracking-[0.12em] sm:max-w-md lg:min-w-[300px] lg:w-auto lg:pl-8 ${className}`,
-      )}
+      className={`group inline-flex min-h-12 w-full max-w-sm items-center justify-between gap-3 border border-ink bg-white py-2 pl-7 pr-2 text-sm font-semibold uppercase tracking-[0.12em] text-ink transition-colors hover:border-sale sm:max-w-md lg:min-w-[300px] lg:w-auto lg:pl-8 ${radius.control} ${className}`}
     >
       <span className="flex-1 text-center">{children}</span>
-      <span
-        className={`flex h-10 w-10 shrink-0 items-center justify-center bg-white text-ink transition-colors group-hover:bg-sale-soft group-hover:text-sale ${radius.control}`}
-      >
-        <HomePillArrow />
+      <span className="flex aspect-square h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sale text-white transition-transform group-hover:scale-105">
+        <HomePillArrow className="h-4 w-4" />
       </span>
     </Link>
   );

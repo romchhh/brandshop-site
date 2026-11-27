@@ -6,8 +6,7 @@ function money(n: number) {
 }
 
 function paymentText(order: LastOrder) {
-  if (order.paymentMethod === "cod") return "Накладений платіж";
-  return order.paymentLabel || "Оплата на карту";
+  return order.paymentLabel || "Повна оплата на рахунок ФОП";
 }
 
 function formatOrderMessage(order: LastOrder): string {
@@ -16,9 +15,13 @@ function formatOrderMessage(order: LastOrder): string {
     "",
     `Джерело: сайт BrandShop`,
     `Оплата: ${paymentText(order)}`,
-    `Сума замовлення: ${money(order.total)}`,
-    `Знижка: 0.00 грн`,
-    `Знижка по промокоду: 0.0 грн`,
+    `Сума замовлення: ${money(order.subtotal ?? order.total)}`,
+    `Знижка: ${money(order.promoDiscount ?? 0)}`,
+    `Знижка по промокоду: ${
+      order.promoCode
+        ? `${order.promoCode}${order.promoPercent ? ` (−${order.promoPercent}%)` : ""} · ${money(order.promoDiscount ?? 0)}`
+        : "0.00 грн"
+    }`,
     `💵Сума до сплати: ${money(order.total)}`,
     "",
     `🛒 Товари`,

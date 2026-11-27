@@ -11,6 +11,7 @@ import {
 } from "@/lib/catalog";
 import { isValidCatalogSize } from "@/lib/feed/sizes";
 import { btnSolidClass, fieldClass } from "@/lib/uiStyles";
+import { CategoryAvatar } from "./CategoryAvatar";
 import { useCatalog } from "./CatalogProvider";
 import { useShop } from "./ShopProvider";
 
@@ -263,7 +264,7 @@ export function CatalogSidebar({
   variant?: "sidebar" | "mobile";
 }) {
   const router = useRouter();
-  const { products, categories, minPrice, maxPrice, categoryGroups } =
+  const { products, productsById, categories, minPrice, maxPrice, categoryGroups } =
     useCatalog();
   const { filters, setFilters, resetFilters } = useShop();
   const [openCategories, setOpenCategories] = useState(true);
@@ -394,7 +395,7 @@ export function CatalogSidebar({
                       <button
                         type="button"
                         onClick={() => toggleGroup(g.liveIds, g.name)}
-                        className={`flex min-w-0 flex-1 items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm transition-colors ${
+                        className={`flex min-w-0 flex-1 items-center gap-2.5 rounded-2xl px-2.5 py-2 text-left text-sm transition-colors ${
                           fullyOn
                             ? "bg-ink font-semibold text-white"
                             : partial
@@ -402,6 +403,18 @@ export function CatalogSidebar({
                               : "hover:bg-black/[0.04] text-black/80"
                         }`}
                       >
+                        <CategoryAvatar
+                          product={
+                            productsById[g.repId] ||
+                            products.find((p) =>
+                              g.liveIds.includes(p.categoryId),
+                            ) ||
+                            null
+                          }
+                          name={g.name}
+                          size={36}
+                          className={fullyOn ? "ring-white/25" : ""}
+                        />
                         <span className="min-w-0 flex-1 truncate">{g.name}</span>
                         <span
                           className={`text-xs tabular-nums ${

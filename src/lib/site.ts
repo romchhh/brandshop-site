@@ -19,17 +19,6 @@ export const SITE = {
 /** Магазини для самовивозу / контактів (Харків). */
 export const STORES = [
   {
-    id: "pravdy",
-    city: "Харків",
-    address: "вул. Правди 7",
-    label: "Магазин на Правди",
-    mapQuery: "Харків, вул. Правди 7",
-    mapEmbedUrl:
-      "https://maps.google.com/maps?q=%D0%A5%D0%B0%D1%80%D0%BA%D1%96%D0%B2%2C%20%D0%B2%D1%83%D0%BB.%20%D0%9F%D1%80%D0%B0%D0%B2%D0%B4%D0%B8%207&z=16&output=embed",
-    mapLink:
-      "https://www.google.com/maps/search/?api=1&query=%D0%A5%D0%B0%D1%80%D0%BA%D1%96%D0%B2%2C+%D0%B2%D1%83%D0%BB.+%D0%9F%D1%80%D0%B0%D0%B2%D0%B4%D0%B8+7",
-  },
-  {
     id: "skovorody",
     city: "Харків",
     address: "вул. Григорія Сковороди 51",
@@ -50,6 +39,7 @@ export const SERVICE_LINKS = [
 ] as const;
 
 export const SHOP_LINKS = [
+  { href: "/categories", label: "Категорії" },
   { href: "/catalog", label: "Каталог" },
   { href: "/catalog?sort=new", label: "Новинки" },
   { href: "/promotional-offers", label: "Акції" },

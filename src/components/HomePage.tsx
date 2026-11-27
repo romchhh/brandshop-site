@@ -18,11 +18,13 @@ function ProductSection({
   items,
   moreHref,
   moreLabel = "Показати ще",
+  markNew = false,
 }: {
   title: string;
   items: ReturnType<typeof homeNewItems>;
   moreHref?: string;
   moreLabel?: string;
+  markNew?: boolean;
 }) {
   if (!items.length) return null;
   return (
@@ -30,7 +32,7 @@ function ProductSection({
       <SectionTitle>{title}</SectionTitle>
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
         {items.map((p) => (
-          <ProductCard key={p.id} product={p} />
+          <ProductCard key={p.id} product={p} forceNew={markNew} />
         ))}
       </div>
       {moreHref ? (
@@ -57,7 +59,7 @@ export function HomePage() {
         <section>
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <SectionTitle>Категорії</SectionTitle>
-            <TextLink href="/catalog">Усі товари</TextLink>
+            <TextLink href="/categories">Усі категорії</TextLink>
           </div>
           <CategoryRail productsById={productsById} products={products} />
         </section>
@@ -66,6 +68,7 @@ export function HomePage() {
           title="Новинки"
           items={newItems}
           moreHref="/catalog?sort=new"
+          markNew
         />
 
         <ProductSection
@@ -78,7 +81,7 @@ export function HomePage() {
           title="Всі товари"
           items={allItems}
           moreHref="/catalog"
-          moreLabel="У каталог"
+          moreLabel="До каталогу"
         />
       </Container>
 

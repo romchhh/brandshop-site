@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/admin/api";
 import { readAdminSettings, writeAdminSettings } from "@/lib/admin/settings";
 import { CATEGORY_GROUPS } from "@/lib/catalog";
 import { invalidateCatalogPublic } from "@/lib/feed/store";
+import { normalizePromoList } from "@/lib/promo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export async function PUT(req: NextRequest) {
   let body: {
     groupOrder?: string[];
     hiddenProductIds?: number[];
+    promoCodes?: unknown;
   };
   try {
     body = (await req.json()) as typeof body;
@@ -39,6 +41,9 @@ export async function PUT(req: NextRequest) {
   const settings = await writeAdminSettings({
     ...(body.groupOrder ? { groupOrder: body.groupOrder } : {}),
     ...(body.hiddenProductIds ? { hiddenProductIds: body.hiddenProductIds } : {}),
+    ...(body.promoCodes !== undefined
+      ? { promoCodes: normalizePromoList(body.promoCodes) }
+      : {}),
   });
   invalidateCatalogPublic();
 

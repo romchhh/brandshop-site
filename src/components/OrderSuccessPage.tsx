@@ -115,9 +115,28 @@ export function OrderSuccessPage({ orderNumber }: { orderNumber: string }) {
                       </li>
                     ))}
                   </ul>
-                  <p className="mt-4 text-right text-lg font-semibold tabular-nums text-ink">
-                    Разом: {formatMoney(order.total)}
-                  </p>
+                  <div className="mt-4 space-y-1 text-right text-sm tabular-nums">
+                    {order.subtotal != null &&
+                    order.promoDiscount &&
+                    order.promoDiscount > 0 ? (
+                      <>
+                        <p className="text-mute">
+                          Товари: {formatMoney(order.subtotal)}
+                        </p>
+                        <p className="text-sale">
+                          Промокод
+                          {order.promoCode ? ` ${order.promoCode}` : ""}
+                          {order.promoPercent
+                            ? ` (−${order.promoPercent}%)`
+                            : ""}
+                          : −{formatMoney(order.promoDiscount)}
+                        </p>
+                      </>
+                    ) : null}
+                    <p className="text-lg font-semibold text-ink">
+                      Разом: {formatMoney(order.total)}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

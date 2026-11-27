@@ -20,8 +20,10 @@ import { Container } from "./ui";
 import { IconHeart } from "./icons";
 
 export function ProductDetail({ id }: { id: number }) {
-  const { products, productsById, categories, ready } = useCatalog();
+  const { products, productsById, categories, ready, newProductIds } =
+    useCatalog();
   const p = productsById[id];
+  const isNew = newProductIds.has(id);
   const { addToCart, isFavorite, toggleFavorite } = useShop();
   const [size, setSize] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
@@ -122,15 +124,29 @@ export function ProductDetail({ id }: { id: number }) {
                 sizes="(max-width: 1024px) 100vw, 55vw"
               />
             </div>
-            {p.sale && (
-              <span className="absolute left-3 top-3 z-10 rounded bg-sale-soft px-2 py-0.5 text-[11px] font-semibold text-sale">
+            {isNew ? (
+              <span className="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded bg-ink px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                <span aria-hidden>🔥</span> NEW
+              </span>
+            ) : null}
+            {p.sale ? (
+              <span
+                className={`absolute left-3 z-10 rounded bg-sale-soft px-2 py-0.5 text-[11px] font-semibold text-sale ${
+                  isNew ? "top-11" : "top-3"
+                }`}
+              >
                 −{Math.round((1 - p.priceSite / p.priceTable) * 100)}%
               </span>
-            )}
+            ) : null}
           </div>
         </div>
 
         <div className="flex w-full flex-col gap-5 lg:max-w-[44%] lg:shrink-0">
+          {isNew ? (
+            <p className="inline-flex w-fit items-center gap-1 rounded-md bg-ink px-2.5 py-1 text-[0.7rem] font-semibold uppercase tracking-wide text-white">
+              <span aria-hidden>🔥</span> New · Новинка
+            </p>
+          ) : null}
           <h1 className="text-[1.85rem] font-semibold capitalize leading-[1.12] tracking-tight text-black sm:text-[2.25rem] lg:text-[2.6rem]">
             {p.title}
           </h1>
@@ -232,8 +248,8 @@ export function ProductDetail({ id }: { id: number }) {
 
           <div className="space-y-0 border-t border-black/10 pt-2">
             <PdpAccordion title="Доставка і оплата" defaultOpen>
-              Нова Пошта, Укрпошта або кур’єр. Оплата при отриманні чи карткою
-              онлайн.
+              Доставка Новою Поштою. Оплата — повна оплата на рахунок ФОП;
+              реквізити надсилає менеджер після підтвердження замовлення.
             </PdpAccordion>
             <PdpAccordion title="Обмін і повернення">
               Можна приміряти у відділенні. Умови обміну уточнюються при

@@ -2,12 +2,9 @@ import type { CartLine } from "@/lib/catalog";
 
 export const LAST_ORDER_KEY = "bs_last_order";
 
-export type DeliveryMethod =
-  | "nova_poshta"
-  | "pickup_pravdy"
-  | "pickup_skovorody";
+export type DeliveryMethod = "nova_poshta" | "pickup_skovorody";
 
-export type PaymentMethod = "card" | "cod";
+export type PaymentMethod = "fop";
 
 export type CheckoutOrderItem = {
   id: number;
@@ -33,6 +30,13 @@ export type LastOrder = {
   paymentLabel: string;
   comment?: string;
   items: CheckoutOrderItem[];
+  /** Cart sum before promo. */
+  subtotal: number;
+  promoCode?: string;
+  promoPercent?: number;
+  /** Absolute discount from promo (UAH). */
+  promoDiscount?: number;
+  /** Final amount to pay. */
   total: number;
 };
 
@@ -47,11 +51,6 @@ export const DELIVERY_OPTIONS: {
     hint: "Відділення або поштомат",
   },
   {
-    value: "pickup_pravdy",
-    title: "Самовивіз з магазину Правди 7",
-    hint: "Харків, вул. Правди 7",
-  },
-  {
     value: "pickup_skovorody",
     title: "Самовивіз з магазину Григорія Сковороди 51",
     hint: "Харків, вул. Григорія Сковороди 51",
@@ -64,14 +63,9 @@ export const PAYMENT_OPTIONS: {
   hint: string;
 }[] = [
   {
-    value: "card",
-    title: "Оплата на карту",
-    hint: "Реквізити надішлемо після підтвердження",
-  },
-  {
-    value: "cod",
-    title: "При отриманні",
-    hint: "Готівка або картка у відділенні / магазині",
+    value: "fop",
+    title: "Повна оплата на рахунок ФОП",
+    hint: "Реквізити надішлемо після підтвердження замовлення",
   },
 ];
 

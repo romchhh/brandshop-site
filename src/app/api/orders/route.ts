@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveOrder } from "@/lib/admin/orders-store";
+import { readAdminSettings } from "@/lib/admin/settings";
 import type { LastOrder } from "@/lib/order";
+import { calcPromoDiscount, findPromo } from "@/lib/promo";
 import { sendOrderToTelegram } from "@/lib/telegram";
 
 export const runtime = "nodejs";
@@ -36,7 +38,46 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const tg = await sendOrderToTelegram(body);
+  const itemsTotal = body.items.reduce(
+    (sum, item) => sum + item.priceSite * item.qty,
+    0,
+  );
+  const subtotal =
+    typeof body.subtotal === "number" && Number.isFinite(body.subtotal)
+      ? body.subtotal
+      : itemsTotal;
+
+  let order: LastOrder = {
+    ...body,
+    subtotal: Math.round(subtotal * 100) / 100,
+    promoCode: undefined,
+    promoPercent: undefined,
+    promoDiscount: 0,
+    total: Math.round(subtotal * 100) / 100,
+  };
+
+  const rawCode =
+    typeof body.promoCode === "string" ? body.promoCode.trim() : "";
+  if (rawCode) {
+    const settings = await readAdminSettings();
+    const promo = findPromo(settings.promoCodes, rawCode);
+    if (!promo) {
+      return NextResponse.json(
+        { ok: false, error: "Промокод недійсний або вимкнений" },
+        { status: 400 },
+      );
+    }
+    const { discount, total } = calcPromoDiscount(order.subtotal, promo.percent);
+    order = {
+      ...order,
+      promoCode: promo.code,
+      promoPercent: promo.percent,
+      promoDiscount: discount,
+      total,
+    };
+  }
+
+  const tg = await sendOrderToTelegram(order);
   if (!tg.ok) {
     return NextResponse.json(
       { ok: false, error: tg.error ?? "Не вдалося надіслати в Telegram" },
@@ -45,10 +86,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    await saveOrder(body);
+    await saveOrder(order);
   } catch (err) {
     console.error("[orders] persist failed:", err);
   }
 
-  return NextResponse.json({ ok: true, number: body.number });
+  return NextResponse.json({
+    ok: true,
+    number: order.number,
+    total: order.total,
+    promoDiscount: order.promoDiscount ?? 0,
+  });
 }
