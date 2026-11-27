@@ -122,7 +122,7 @@ export function Header() {
     <>
       <div className="border-b border-sale-deep/40 bg-sale text-center text-[0.65rem] uppercase tracking-[0.16em] text-white/95 sm:text-[0.75rem] sm:tracking-[0.2em]">
         <Container className="px-4 py-2.5 sm:px-10 sm:py-3.5 lg:px-14">
-          Доставка по Україні · Оплата на рахунок ФОП
+          Доставка по Україні · Оплата при отриманні
         </Container>
       </div>
 
