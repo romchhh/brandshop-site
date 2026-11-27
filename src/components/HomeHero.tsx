@@ -26,9 +26,11 @@ import { Button, Container, TextLink } from "./ui";
 
 const ROTATE_MS = 4500;
 const SWIPE_THRESHOLD = 40;
-const GAP_PX = 12;
-const MOBILE_GAP_PX = 10;
-const MOBILE_CARD_RATIO = 0.64;
+const GAP_MOBILE = 10;
+const GAP_DESKTOP = 14;
+/** Частка ширини в'юпорта під картку (мобільний / десктоп). */
+const CARD_RATIO_MOBILE = 0.64;
+const CARD_RATIO_DESKTOP = 0.58;
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(false);
@@ -44,118 +46,63 @@ function useIsMobile() {
   return mobile;
 }
 
-type HeroSlot = "center" | "side" | "solo";
-
-const heroAspectCache = new Map<number, number>();
-
 function HeroCard({
   product,
-  slot,
+  active,
   priority,
 }: {
   product: Product;
-  slot: HeroSlot;
+  active: boolean;
   priority?: boolean;
 }) {
-  const isCenter = slot === "center" || slot === "solo";
-  const [aspect, setAspect] = useState(
-    () => heroAspectCache.get(product.id) ?? 3 / 4,
-  );
-
-  useEffect(() => {
-    const cached = heroAspectCache.get(product.id);
-    setAspect(cached ?? 3 / 4);
-  }, [product.id]);
-
   return (
     <Link
       href={productPath(product)}
       draggable={false}
-      className="group block w-full shrink-0 select-none"
+      className="group block w-full select-none"
       aria-label={`${product.title}, ${formatMoney(product.priceSite)}`}
+      aria-current={active ? "true" : undefined}
       onDragStart={(e) => e.preventDefault()}
     >
       <div
-        className={`pb-2 pt-1 max-md:px-0 md:px-1.5 md:pb-3 md:pt-1 ${
-          slot !== "solo" ? "px-1 sm:px-1.5" : ""
-        } ${isCenter ? "md:-translate-y-3 lg:-translate-y-5" : "md:translate-y-2"}`}
+        className={`relative aspect-square w-full overflow-hidden rounded-2xl bg-ph ring-1 ring-black/[0.06] transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          active
+            ? "scale-100 shadow-[0_16px_40px_rgba(18,19,22,0.14)]"
+            : "scale-[0.94] shadow-[0_8px_24px_rgba(18,19,22,0.08)] opacity-90"
+        }`}
       >
+        <Image
+          src={productImageUrl(product)}
+          alt={product.title}
+          fill
+          priority={priority}
+          draggable={false}
+          sizes="(max-width: 767px) 64vw, 28vw"
+          className="pointer-events-none object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+        />
         <div
-          className={`relative w-full overflow-hidden rounded-2xl bg-ph ring-1 ring-black/[0.06] transition-shadow duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-            isCenter
-              ? "shadow-[0_16px_40px_rgba(18,19,22,0.14)]"
-              : "shadow-[0_10px_28px_rgba(18,19,22,0.09)]"
-          }`}
-          style={{ aspectRatio: aspect }}
-        >
-          <Image
-            src={productImageUrl(product)}
-            alt={product.title}
-            fill
-            priority={priority}
-            draggable={false}
-            sizes={
-              slot === "solo"
-                ? "(max-width: 767px) 64vw, 28vw"
-                : isCenter
-                  ? "(max-width: 767px) 64vw, 24vw"
-                  : "(max-width: 767px) 40vw, 13vw"
-            }
-            className="pointer-events-none object-cover object-center"
-            onLoadingComplete={(img) => {
-              const w = img.naturalWidth;
-              const h = img.naturalHeight;
-              if (!w || !h) return;
-              const ratio = w / h;
-              heroAspectCache.set(product.id, ratio);
-              setAspect(ratio);
-            }}
-          />
-          <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 via-ink/25 to-transparent pt-12"
-            aria-hidden
-          />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-2.5 pb-2.5 sm:px-3 sm:pb-3">
-            <p
-              className={`line-clamp-2 font-semibold leading-snug text-white ${
-                isCenter ? "text-[0.8rem] sm:text-[0.88rem]" : "text-[0.72rem] sm:text-[0.78rem]"
-              }`}
-            >
-              {product.title}
-            </p>
-            <p
-              className={`mt-0.5 font-semibold tabular-nums text-white/90 ${
-                isCenter ? "text-sm" : "text-xs sm:text-sm"
-              }`}
-            >
-              {formatMoney(product.priceSite)}
-            </p>
-          </div>
+          className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 via-ink/25 to-transparent pt-12"
+          aria-hidden
+        />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 px-2.5 pb-2.5 sm:px-3 sm:pb-3">
+          <p
+            className={`line-clamp-2 font-semibold leading-snug text-white ${
+              active ? "text-[0.8rem] sm:text-[0.88rem]" : "text-[0.72rem] sm:text-[0.78rem]"
+            }`}
+          >
+            {product.title}
+          </p>
+          <p
+            className={`mt-0.5 font-semibold tabular-nums text-white/90 ${
+              active ? "text-sm" : "text-xs sm:text-sm"
+            }`}
+          >
+            {formatMoney(product.priceSite)}
+          </p>
         </div>
       </div>
     </Link>
   );
-}
-
-function visibleTriple(pool: Product[], index: number) {
-  const len = pool.length;
-  if (!len) return [];
-  if (len === 1) return [{ product: pool[0], slot: "solo" as const, poolIndex: 0 }];
-  if (len === 2) {
-    const other = index === 0 ? 1 : 0;
-    return [
-      { product: pool[other], slot: "side" as const, poolIndex: other },
-      { product: pool[index], slot: "center" as const, poolIndex: index },
-      { product: pool[other], slot: "side" as const, poolIndex: other },
-    ];
-  }
-  const prev = (index - 1 + len) % len;
-  const next = (index + 1) % len;
-  return [
-    { product: pool[prev], slot: "side" as const, poolIndex: prev },
-    { product: pool[index], slot: "center" as const, poolIndex: index },
-    { product: pool[next], slot: "side" as const, poolIndex: next },
-  ];
 }
 
 export function HomeHero() {
@@ -174,11 +121,10 @@ export function HomeHero() {
   const [paused, setPaused] = useState(false);
   const [dragX, setDragX] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [settling, setSettling] = useState(false);
   const [horizontalLock, setHorizontalLock] = useState(false);
 
   const viewportRef = useRef<HTMLDivElement>(null);
-  const [mobileLayout, setMobileLayout] = useState({ viewport: 0, card: 0 });
+  const [layout, setLayout] = useState({ viewport: 0, card: 0, gap: GAP_MOBILE });
 
   const pointerIdRef = useRef<number | null>(null);
   const startXRef = useRef(0);
@@ -194,19 +140,21 @@ export function HomeHero() {
 
   const loading = !ready && pool.length === 0;
   const canRotate = pool.length > 1;
-  const triple = useMemo(() => visibleTriple(pool, index), [pool, index]);
+  const gap = isMobile ? GAP_MOBILE : GAP_DESKTOP;
 
   useEffect(() => {
     const el = viewportRef.current;
-    if (!el || !isMobile) return;
+    if (!el) return;
     const sync = () => {
-      const w = Math.round(
-        window.visualViewport?.width ?? el.getBoundingClientRect().width,
-      );
-      if (w) {
-        const card = Math.round(w * MOBILE_CARD_RATIO);
-        setMobileLayout({ viewport: w, card });
-      }
+      const w = Math.round(el.getBoundingClientRect().width);
+      if (!w) return;
+      const ratio = isMobile ? CARD_RATIO_MOBILE : CARD_RATIO_DESKTOP;
+      const g = isMobile ? GAP_MOBILE : GAP_DESKTOP;
+      setLayout({
+        viewport: w,
+        card: Math.round(w * ratio),
+        gap: g,
+      });
     };
     sync();
     const ro = new ResizeObserver(sync);
@@ -224,13 +172,10 @@ export function HomeHero() {
     setIndex((i) => ((i % pool.length) + pool.length) % pool.length);
   }, [pool.length]);
 
-  const { viewport: mobileViewport, card: mobileCard } = mobileLayout;
-  const mobileTrackX =
-    mobileCard > 0
-      ? mobileViewport / 2 -
-        mobileCard / 2 -
-        index * (mobileCard + MOBILE_GAP_PX) +
-        dragX
+  const { viewport, card } = layout;
+  const trackX =
+    card > 0
+      ? viewport / 2 - card / 2 - index * (card + gap) + dragX
       : dragX;
 
   const goTo = useCallback(
@@ -238,12 +183,11 @@ export function HomeHero() {
       if (!pool.length) return;
       const len = pool.length;
       const normalized = ((next % len) + len) % len;
-      if (normalized !== index) setSettling(true);
       setIndex(normalized);
       setDragX(0);
       dragXRef.current = 0;
     },
-    [index, pool.length],
+    [pool.length],
   );
 
   const goNext = useCallback(() => {
@@ -276,7 +220,6 @@ export function HomeHero() {
     axisLockRef.current = null;
     setHorizontalLock(false);
     dragXRef.current = 0;
-    // Capture only after horizontal swipe starts — otherwise taps reach the product link.
   }
 
   function onPointerMove(e: ReactPointerEvent<HTMLDivElement>) {
@@ -313,11 +256,7 @@ export function HomeHero() {
     if (axisLockRef.current !== "x") return;
 
     e.preventDefault();
-    const maxDrag = isMobile
-      ? mobileCard > 0
-        ? mobileCard * 1.15
-        : 180
-      : 220;
+    const maxDrag = card > 0 ? card * 1.1 : 220;
     const capped = Math.max(-maxDrag, Math.min(maxDrag, dx));
     dragXRef.current = capped;
     setDragX(capped);
@@ -352,13 +291,8 @@ export function HomeHero() {
       return;
     }
 
-    if (locked === "x") setSettling(true);
     setDragX(0);
     dragXRef.current = 0;
-  }
-
-  function onTrackTransitionEnd() {
-    if (!dragging) setSettling(false);
   }
 
   function onClickCapture(e: React.MouseEvent) {
@@ -368,11 +302,12 @@ export function HomeHero() {
   }
 
   const slideStyle = {
-    transform: `translate3d(${isMobile ? mobileTrackX : dragX}px, 0, 0)`,
+    transform: `translate3d(${trackX}px, 0, 0)`,
     transition: dragging
       ? "none"
       : "transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)",
     touchAction: horizontalLock ? ("none" as const) : ("pan-y" as const),
+    gap,
   };
 
   return (
@@ -402,78 +337,43 @@ export function HomeHero() {
         >
           <div
             ref={viewportRef}
-            className="w-full overflow-x-clip overflow-y-visible max-md:ml-[calc(50%-50vw)] max-md:w-screen max-md:max-w-[100dvw] md:overflow-visible"
+            className="w-full overflow-x-clip overflow-y-visible max-md:ml-[calc(50%-50vw)] max-md:w-screen max-md:max-w-[100dvw]"
             style={{ touchAction: "pan-y" }}
           >
             <div
-              className="cursor-grab active:cursor-grabbing"
+              className="flex cursor-grab active:cursor-grabbing"
               style={slideStyle}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={finishDrag}
               onPointerCancel={finishDrag}
               onClickCapture={onClickCapture}
-              onTransitionEnd={onTrackTransitionEnd}
             >
               {loading ? (
-                isMobile ? (
-                  <div
-                    className="px-1"
-                    style={{
-                      width: mobileCard || undefined,
-                      marginLeft:
-                        mobileCard && mobileViewport
-                          ? mobileViewport / 2 - mobileCard / 2
-                          : undefined,
-                    }}
-                  >
-                    <div className="aspect-[3/4] animate-pulse rounded-2xl bg-ph" />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-[minmax(0,0.76fr)_minmax(0,1.48fr)_minmax(0,0.76fr)] items-end gap-2.5 md:gap-3">
-                    {[0, 1, 2].map((slot) => (
-                      <div
-                        key={slot}
-                        className="aspect-[3/4] animate-pulse rounded-2xl bg-ph"
-                      />
-                    ))}
-                  </div>
-                )
-              ) : isMobile ? (
-                <div className="flex" style={{ gap: MOBILE_GAP_PX }}>
-                  {pool.map((p, i) => (
-                    <div
-                      key={p.id}
-                      className="shrink-0"
-                      style={{ width: mobileCard || undefined }}
-                    >
-                      <HeroCard
-                        product={p}
-                        slot="solo"
-                        priority={i === index}
-                      />
-                    </div>
-                  ))}
+                <div
+                  className="shrink-0 px-0.5"
+                  style={{
+                    width: card || undefined,
+                    marginLeft:
+                      card && viewport ? viewport / 2 - card / 2 : undefined,
+                  }}
+                >
+                  <div className="aspect-square animate-pulse rounded-2xl bg-ph" />
                 </div>
               ) : (
-                <div
-                  className={`grid items-end gap-2.5 transition-opacity duration-300 md:gap-3 ${
-                    pool.length > 2
-                      ? "grid-cols-[minmax(0,0.76fr)_minmax(0,1.48fr)_minmax(0,0.76fr)]"
-                      : pool.length === 2
-                        ? "grid-cols-[minmax(0,0.85fr)_minmax(0,1.3fr)_minmax(0,0.85fr)]"
-                        : "grid-cols-1"
-                  } ${settling && !dragging ? "opacity-[0.97]" : "opacity-100"}`}
-                >
-                  {triple.map(({ product, slot, poolIndex }) => (
+                pool.map((p, i) => (
+                  <div
+                    key={p.id}
+                    className="shrink-0"
+                    style={{ width: card || undefined }}
+                  >
                     <HeroCard
-                      key={`${product.id}-${slot}-${poolIndex}`}
-                      product={product}
-                      slot={slot}
-                      priority={poolIndex === index}
+                      product={p}
+                      active={i === index}
+                      priority={i === index || Math.abs(i - index) <= 1}
                     />
-                  ))}
-                </div>
+                  </div>
+                ))
               )}
             </div>
           </div>
