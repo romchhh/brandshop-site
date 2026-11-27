@@ -11,6 +11,7 @@ import {
   DEFAULT_KEYWORDS,
   SITE_NAME,
   SITE_URL,
+  localBusinessJsonLd,
   organizationJsonLd,
   websiteJsonLd,
 } from "@/lib/seo";
@@ -78,7 +79,8 @@ export const metadata: Metadata = {
     },
   },
   other: {
-    "geo.region": "UA",
+    "geo.region": "UA-63",
+    "geo.placename": SITE.city,
   },
 };
 
@@ -94,11 +96,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const localBusiness = localBusinessJsonLd();
+
   return (
     <html lang="uk" className={montserrat.variable}>
       <body className={`${montserrat.className} min-h-screen bg-white`}>
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
+        {localBusiness ? <JsonLd data={localBusiness} /> : null}
         <CatalogProvider>
           <ShopProvider>
             <Suspense fallback={null}>

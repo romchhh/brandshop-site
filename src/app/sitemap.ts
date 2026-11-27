@@ -1,14 +1,23 @@
 import type { MetadataRoute } from "next";
+import { CATEGORY_GROUPS } from "@/lib/catalog";
 import { getCatalogPublic } from "@/lib/feed/store";
 import { productPath } from "@/lib/product-url";
 import { absoluteUrl } from "@/lib/seo";
 
 export const revalidate = 3600;
 
-const STATIC_PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"]; priority: number }[] = [
+type StaticEntry = {
+  path: string;
+  changeFrequency: NonNullable<
+    MetadataRoute.Sitemap[number]["changeFrequency"]
+  >;
+  priority: number;
+};
+
+const STATIC_PATHS: StaticEntry[] = [
   { path: "/", changeFrequency: "daily", priority: 1 },
-  { path: "/categories", changeFrequency: "weekly", priority: 0.85 },
-  { path: "/catalog", changeFrequency: "daily", priority: 0.9 },
+  { path: "/categories", changeFrequency: "weekly", priority: 0.9 },
+  { path: "/catalog", changeFrequency: "daily", priority: 0.95 },
   { path: "/catalog?sort=new", changeFrequency: "daily", priority: 0.85 },
   { path: "/promotional-offers", changeFrequency: "daily", priority: 0.8 },
   { path: "/delivery", changeFrequency: "monthly", priority: 0.5 },
@@ -17,6 +26,7 @@ const STATIC_PATHS: { path: string; changeFrequency: MetadataRoute.Sitemap[numbe
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+
   const staticEntries: MetadataRoute.Sitemap = STATIC_PATHS.map((item) => ({
     url: absoluteUrl(item.path),
     lastModified: now,
@@ -24,20 +34,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: item.priority,
   }));
 
+  const categoryEntries: MetadataRoute.Sitemap = CATEGORY_GROUPS.map((g) => ({
+    url: absoluteUrl(`/catalog?cats=${g.categoryIds.join(",")}`),
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
+  }));
+
   try {
     const catalog = await getCatalogPublic();
+    const lastMod = catalog.syncedAt ? new Date(catalog.syncedAt) : now;
+
     const productEntries: MetadataRoute.Sitemap = catalog.products.map(
       (product) => ({
         url: absoluteUrl(productPath(product)),
-        lastModified: catalog.syncedAt
-          ? new Date(catalog.syncedAt)
-          : now,
-        changeFrequency: "weekly",
-        priority: 0.7,
+        lastModified: lastMod,
+        changeFrequency: "weekly" as const,
+        priority: product.sale ? 0.75 : 0.65,
       }),
     );
-    return [...staticEntries, ...productEntries];
+
+    return [...staticEntries, ...categoryEntries, ...productEntries];
   } catch {
-    return staticEntries;
+    return [...staticEntries, ...categoryEntries];
   }
 }

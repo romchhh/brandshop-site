@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { productPath } from "@/lib/product-url";
-import { SITE } from "@/lib/site";
+import { SITE, STORES } from "@/lib/site";
 
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? SITE.domain;
@@ -9,17 +9,20 @@ export const SITE_NAME = SITE.brand;
 export const SITE_NAME_FULL = SITE.brandFull;
 
 export const DEFAULT_DESCRIPTION =
-  "Чоловічий одяг, взуття та аксесуари. Новинки щотижня, доставка Новою Поштою по Україні, оплата на рахунок ФОП.";
+  "Чоловічий одяг, взуття та аксесуари. Новинки щотижня, доставка Новою Поштою по Україні, оплата на рахунок ФОП. Самовивіз у Харкові.";
 
 export const DEFAULT_KEYWORDS = [
   "чоловічий одяг",
   "брендовий одяг",
-  "взуття",
+  "чоловіче взуття",
   "аксесуари",
   "BrandShop",
+  "BrandShop Харків",
   "купити онлайн",
-  "Україна",
   "Нова Пошта",
+  "куртки",
+  "джинси",
+  "худі",
 ];
 
 export function absoluteUrl(path = "/"): string {
@@ -75,21 +78,66 @@ export function pageMetadata({
 }
 
 export function organizationJsonLd() {
+  const store = STORES[0];
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: SITE_NAME,
     alternateName: SITE_NAME_FULL,
     url: SITE_URL,
+    logo: absoluteUrl("/icon.svg"),
     sameAs: [SITE.telegram],
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer service",
-      telephone: "+380663581645",
+      telephone: SITE.phoneHref.replace("tel:", ""),
       areaServed: "UA",
       url: SITE.telegram,
-      availableLanguage: ["Ukrainian", "Russian"],
+      availableLanguage: ["uk", "ru"],
     },
+    address: store
+      ? {
+          "@type": "PostalAddress",
+          addressLocality: store.city,
+          streetAddress: store.address,
+          addressCountry: "UA",
+        }
+      : undefined,
+  };
+}
+
+export function localBusinessJsonLd() {
+  const store = STORES[0];
+  if (!store) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "ClothingStore",
+    name: SITE_NAME,
+    image: absoluteUrl("/icon.svg"),
+    url: SITE_URL,
+    telephone: SITE.phoneHref.replace("tel:", ""),
+    priceRange: "₴₴",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: store.city,
+      streetAddress: store.address,
+      addressCountry: "UA",
+    },
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ],
+      opens: "10:00",
+      closes: "20:00",
+    },
+    sameAs: [SITE.telegram],
   };
 }
 
@@ -100,6 +148,11 @@ export function websiteJsonLd() {
     name: SITE_NAME,
     url: SITE_URL,
     inLanguage: "uk-UA",
+    publisher: {
+      "@type": "Organization",
+      name: SITE_NAME,
+      url: SITE_URL,
+    },
     potentialAction: {
       "@type": "SearchAction",
       target: {
