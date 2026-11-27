@@ -419,40 +419,47 @@ export function homeNewItems(
 }
 
 /**
- * Hero на головній: ручний список з адмінки, інакше — новинки.
- * Якщо ручних менше за `minManual`, добираємо з новинок.
+ * Hero на головній:
+ * — якщо в адмінці задано heroIds — показуємо їх у цьому порядку;
+ * — інакше — по одному найновішому товару (max id) з кожної категорії-групи.
  */
 export function homeHeroItems(
   products: Product[],
-  limit = 12,
-  rank?: Map<number, number>,
+  groups: CategoryGroup[] = CATEGORY_GROUPS,
   heroIds?: number[],
 ): Product[] {
   if (!products.length) return [];
-  const byId = indexById(products);
-  const picked: Product[] = [];
-  const seen = new Set<number>();
 
   if (heroIds?.length) {
+    const byId = indexById(products);
+    const picked: Product[] = [];
+    const seen = new Set<number>();
     for (const id of heroIds) {
-      if (picked.length >= limit) break;
       const p = byId[id];
       if (!p || seen.has(p.id)) continue;
       picked.push(p);
       seen.add(p.id);
     }
+    if (picked.length) return picked;
   }
 
-  if (picked.length < Math.min(3, limit) || !heroIds?.length) {
-    for (const p of homeNewItems(products, limit, rank)) {
-      if (picked.length >= limit) break;
-      if (seen.has(p.id)) continue;
-      picked.push(p);
-      seen.add(p.id);
+  const orderedGroups = groups.length ? groups : CATEGORY_GROUPS;
+  const picked: Product[] = [];
+  const seen = new Set<number>();
+
+  for (const group of orderedGroups) {
+    const ids = new Set(group.categoryIds);
+    let newest: Product | null = null;
+    for (const p of products) {
+      if (!ids.has(p.categoryId)) continue;
+      if (!newest || p.id > newest.id) newest = p;
     }
+    if (!newest || seen.has(newest.id)) continue;
+    picked.push(newest);
+    seen.add(newest.id);
   }
 
-  return picked.slice(0, limit);
+  return picked;
 }
 
 /** Id новинок (той самий порядок, що й «Новинки») — для бейджа NEW. */

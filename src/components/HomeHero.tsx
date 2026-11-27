@@ -29,7 +29,6 @@ const SWIPE_THRESHOLD = 40;
 const GAP_PX = 12;
 const MOBILE_GAP_PX = 10;
 const MOBILE_CARD_RATIO = 0.64;
-const HERO_LIMIT = 12;
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(false);
@@ -166,7 +165,7 @@ export function HomeHero() {
     minPrice,
     maxPrice,
     ready,
-    categoryRank,
+    categoryGroups,
     heroProductIds,
   } = useCatalog();
   const { resetFilters, setFilters } = useShop();
@@ -189,8 +188,8 @@ export function HomeHero() {
   const suppressClickRef = useRef(false);
 
   const pool = useMemo(
-    () => homeHeroItems(products, HERO_LIMIT, categoryRank, heroProductIds),
-    [products, categoryRank, heroProductIds],
+    () => homeHeroItems(products, categoryGroups, heroProductIds),
+    [products, categoryGroups, heroProductIds],
   );
 
   const loading = !ready && pool.length === 0;

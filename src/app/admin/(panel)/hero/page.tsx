@@ -155,9 +155,9 @@ export default function AdminHeroPage() {
       if (data.ok) {
         setDirty(false);
         setMessage({
-          text: selected.length
+            text: selected.length
             ? "Hero оновлено. На головній показуються обрані товари."
-            : "Hero скинуто. На головній знову автоматичні новинки.",
+            : "Hero скинуто. Знову по одному найновішому з кожної категорії.",
           tone: "success",
         });
       } else {
@@ -180,7 +180,7 @@ export default function AdminHeroPage() {
     <div>
       <AdminPageHeader
         title="Hero / головна"
-        description="Товари в каруселі на головній. Порожній список = автоматичні новинки (за порядком груп)."
+        description="Товари в каруселі на головній. Порожній список = по одному найновішому товару з кожної категорії."
         actions={
           <>
             {dirty ? <AdminBadge tone="warn">Є зміни</AdminBadge> : null}
@@ -211,7 +211,7 @@ export default function AdminHeroPage() {
             <p className="mt-0.5 text-xs text-mute">
               {selected.length
                 ? `${selected.length} з ${MAX_HERO} · порядок = порядок у каруселі`
-                : "Авторежим: топ новинок з каталогу"}
+                : "Авторежим: 1 найновіший товар з кожної категорії"}
             </p>
           </div>
           {loading ? (
@@ -222,8 +222,8 @@ export default function AdminHeroPage() {
             </div>
           ) : selected.length === 0 ? (
             <AdminEmpty
-              title="Авто-новинки"
-              description="На головній крутяться найновіші товари за порядком груп. Додайте товари праворуч, щоб зафіксувати свій набір."
+              title="Авторежим"
+              description="У hero — по одному найновішому товару з кожної категорії (порядок як у «Групи / новинки»). Додайте товари праворуч, щоб задати свій набір."
             />
           ) : (
             <ol className="divide-y divide-black/[0.05]">
