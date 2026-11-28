@@ -13,7 +13,7 @@ function esc(value: string | number | undefined | null): string {
 }
 
 function paymentText(order: LastOrder) {
-  return order.paymentLabel || "Повна оплата на рахунок ФОП";
+  return order.paymentLabel || "Оплата не вказана";
 }
 
 function formatOrderMessage(order: LastOrder): string {

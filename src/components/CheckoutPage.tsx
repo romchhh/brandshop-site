@@ -607,6 +607,9 @@ export function CheckoutPage() {
                             setCityRef("");
                             setWarehouse("");
                             setWarehouseRef("");
+                            setPayment((prev) =>
+                              prev === "cod" ? "fop" : prev,
+                            );
                           }
                         }}
                       />
@@ -726,7 +729,9 @@ export function CheckoutPage() {
                     Спосіб оплати
                   </p>
                   <div className="space-y-2.5">
-                    {PAYMENT_OPTIONS.map((opt) => (
+                    {PAYMENT_OPTIONS.filter(
+                      (opt) => opt.value !== "cod" || isNp,
+                    ).map((opt) => (
                       <Choice
                         key={opt.value}
                         active={payment === opt.value}

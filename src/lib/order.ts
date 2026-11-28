@@ -4,7 +4,7 @@ export const LAST_ORDER_KEY = "bs_last_order";
 
 export type DeliveryMethod = "nova_poshta" | "pickup_skovorody";
 
-export type PaymentMethod = "fop";
+export type PaymentMethod = "fop" | "cod";
 
 export type CheckoutOrderItem = {
   id: number;
@@ -66,6 +66,11 @@ export const PAYMENT_OPTIONS: {
     value: "fop",
     title: "Повна оплата на рахунок ФОП",
     hint: "Реквізити надішлемо після підтвердження замовлення",
+  },
+  {
+    value: "cod",
+    title: "Накладений платіж Нової Пошти",
+    hint: "Оплата при отриманні у відділенні або поштоматі",
   },
 ];
 
